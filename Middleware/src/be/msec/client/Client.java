@@ -4,12 +4,18 @@ import be.msec.client.connection.Connection;
 import be.msec.client.connection.IConnection;
 import be.msec.client.connection.SimulatedConnection;
 
+import java.nio.ByteBuffer;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import javax.smartcardio.*;
 
 public class Client {
 
 	private final static byte IDENTITY_CARD_CLA =(byte)0x80;
 	private static final byte VALIDATE_PIN_INS = 0x22;
+	private static final byte DO_HELLO_TIME = 0x28;
 	private final static short SW_VERIFICATION_FAILED = 0x6300;
 	private final static short SW_PIN_VERIFICATION_REQUIRED = 0x6301;
 	/**
@@ -62,6 +68,9 @@ public class Client {
 			if (r.getSW()==SW_VERIFICATION_FAILED) throw new Exception("PIN INVALID");
 			else if(r.getSW()!=0x9000) throw new Exception("Exception on the card: " + r.getSW());
 			System.out.println("PIN Verified");
+		
+			sendCurrentTime();
+			
 			
 		} catch (Exception e) {
 			throw e;
@@ -69,8 +78,19 @@ public class Client {
 		finally {
 			c.close();  // close the connection with the card
 		}
-
-
 	}
+	
+	public static void sendCurrentTime()
+	{
+		long current= System.currentTimeMillis();
+		byte[] message = ByteBuffer.allocate(13).put("Hello".getBytes()).putLong(current).array();
+		
+		//a = new CommandAPDU(IDENTITY_CARD_CLA, DO_HELLO_TIME, 0x00, 0x00, message, 1);
+		//r = c.transmit(a);
+	}
+	
+		
+	
+	
 
 }

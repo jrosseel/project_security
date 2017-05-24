@@ -23,13 +23,7 @@ hs_err_pid*
 
 .metadata
 .recommenders
-JavaCard/.settings
-JavaCard/.project
-JavaCard/.settings
 JavaCard/CAPGenerationScript.txt
 JavaCard/GPShell-1.4.4
-
-*.bat
-*.classpath
 
 RemoteSystemsTempFiles

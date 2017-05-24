@@ -1,7 +1,6 @@
 package load;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -12,9 +11,8 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
-import javax.crypto.Cipher;
-
 import settings.CertificateMakerConfig;
+
 
 public class KeyReader 
 {

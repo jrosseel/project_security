@@ -249,12 +249,12 @@ public class IdentityCard extends Applet {
 	{
 
 		byte[] buffer = apdu.getBuffer();
-		//byte Lc = buffer[ISO7816.OFFSET_LC];			
-		//byte bytesRead = (byte) apdu.setIncomingAndReceive();
-		//if(bytesRead != Lc) ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
+
+		// Lc byte denotes the number of bytes in the data field of the command APDU
+		byte numBytes = buffer[ISO7816.OFFSET_LC];
+		byte byteRead = (byte)(apdu.setIncomingAndReceive());
 		
-		// Incoming= "Hello[TimeMilliseconds]"			
-		//byte[] hello_string = new byte[]{72, 101, 108, 108, 111};
+		
 			
     }
 	

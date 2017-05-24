@@ -69,9 +69,13 @@ public class Client {
 			else if(r.getSW()!=0x9000) throw new Exception("Exception on the card: " + r.getSW());
 			System.out.println("PIN Verified");
 		
-			sendCurrentTime();
+			// Step 1: SC <- M
+			// Send Hello[CurrentTime] to the card
+			long current= System.currentTimeMillis();
+			byte[] message = ByteBuffer.allocate(13).put("Hello".getBytes()).putLong(current).array();
 			
-			
+			a = new CommandAPDU(IDENTITY_CARD_CLA, DO_HELLO_TIME, 0x00, 0x00, message, 1);
+			r = c.transmit(a);						
 		} catch (Exception e) {
 			throw e;
 		}
@@ -80,14 +84,7 @@ public class Client {
 		}
 	}
 	
-	public static void sendCurrentTime()
-	{
-		long current= System.currentTimeMillis();
-		byte[] message = ByteBuffer.allocate(13).put("Hello".getBytes()).putLong(current).array();
-		
-		//a = new CommandAPDU(IDENTITY_CARD_CLA, DO_HELLO_TIME, 0x00, 0x00, message, 1);
-		//r = c.transmit(a);
-	}
+	
 	
 		
 	

@@ -8,13 +8,14 @@ public class Certificate implements Serializable {
 		
 	}
 
+	public String subject;
+	public String domain;
+	
+	public byte[] publicKey;
+	
 
-	private String subject;
-	private String issuer;
-	private String domain;
-	
-	private byte[] publicKey;
-	
+	public String issuer;
+	public byte[] issuerSignature;
 	
 	
 	

@@ -48,7 +48,6 @@ public class KeyReader
 		return pk;
 	}
 	
-	
 	/** Loads a KeyStore, given the location and password.
 	 */
 	private static KeyStore _LoadKeyStore(String keyStoreLoc, String password) 

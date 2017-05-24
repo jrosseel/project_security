@@ -14,10 +14,6 @@ public class Certificate implements Serializable
 	
 	public byte[] publicKey;
 	
-
-	public String issuer;
-	public byte[] signature;
-	
 	
 	/**
 	 *  Serializable 

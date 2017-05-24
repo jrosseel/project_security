@@ -23,7 +23,7 @@ public class Cryptography
 	 * 
 	 * @param obj: Serializable object. This is mandatory to ensure we can easily transform the bytes back into an object after decryption.
 	 */
-	public byte[] encrypt(Serializable obj, Key key) 
+	public static byte[] encrypt(Serializable obj, Key key) 
 		throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IOException, IllegalBlockSizeException, BadPaddingException 
 	{
 		// Encode the object
@@ -41,7 +41,7 @@ public class Cryptography
 	/**
 	 * Decrypt an in byte-array stored object, and transform it back into the object.
 	 */
-	public Object decrypt(byte[] message, Key key) 
+	public static Object decrypt(byte[] message, Key key) 
 			throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IOException, IllegalBlockSizeException, BadPaddingException, ClassNotFoundException 
 	{        
 		// Depcrypt the object, using the given key

@@ -25,5 +25,6 @@ hs_err_pid*
 .recommenders
 JavaCard/CAPGenerationScript.txt
 JavaCard/GPShell-1.4.4
+JavaCard/target
 
 RemoteSystemsTempFiles

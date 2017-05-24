@@ -103,7 +103,8 @@ public class IdentityCard extends Applet {
 	 * This method is called by the JCRE when installing the applet on the card.
 	 */
 	public static void install(byte bArray[], short bOffset, byte bLength)
-			throws ISOException {
+			throws ISOException 
+	{
 		new IdentityCard();
 	}
 	
@@ -111,16 +112,19 @@ public class IdentityCard extends Applet {
 	 * If no tries are remaining, the applet refuses selection.
 	 * The card can, therefore, no longer be used for identification.
 	 */
-	public boolean select() {
+	public boolean select() 
+	{
 		if (pin.getTriesRemaining()==0)
 			return false;
+		
 		return true;
 	}
 
 	/*
 	 * This method is called when the applet is selected and an APDU arrives.
 	 */
-	public void process(APDU apdu) throws ISOException {
+	public void process(APDU apdu) throws ISOException 
+	{
 		//A reference to the buffer, where the APDU data is stored, is retrieved.
 		byte[] buffer = apdu.getBuffer();
 		
@@ -128,61 +132,32 @@ public class IdentityCard extends Applet {
 		if(this.selectingApplet())
 			return;
 		
+		
 		//Check whether the indicated class of instructions is compatible with this applet.
-		if (buffer[ISO7816.OFFSET_CLA] != IDENTITY_CARD_CLA)ISOException.throwIt(ISO7816.SW_CLA_NOT_SUPPORTED);
-		//A switch statement is used to select a method depending on the instruction
-		switch(buffer[ISO7816.OFFSET_INS]){
-		case VALIDATE_PIN_INS:
-			validatePIN(apdu);
-			break;
-		case GET_SERIAL_INS:
-			getSerial(apdu);
-			break;
-		case GET_NAME_INS:
-			getName(apdu);
-			break;
-		case GET_ADDRESS_INS:
-			getAddress(apdu);
-			break;
-		case GET_COUNTRY_INS:
-			getCountry(apdu);
-			break;
-		case GET_BIRTH_DATE_INS:
-			getBirthDate(apdu);
-			break;
-		case GET_AGE_INS:
-			getAge(apdu);
-			break;
-		case GET_GENDER_INS:
-			getGender(apdu);
-			break;
-		case GET_SSN_INS:
-			getSSN(apdu);
-			break;
-		case GET_PHOTO_INS:
-			getPhoto(apdu);
-			break;
-		case DO_HELLO_TIME:
-			doHelloTime(apdu);
-			break;
-			
-		//If no matching instructions are found it is indicated in the status word of the response.
-		//This can be done by using this method. As an argument a short is given that indicates
-		//the type of warning. There are several predefined warnings in the 'ISO7816' class.
-		default: ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
-		}
+		if (buffer[ISO7816.OFFSET_CLA] != IDENTITY_CARD_CLA)
+			ISOException.throwIt(ISO7816.SW_CLA_NOT_SUPPORTED);
+		
+		if(buffer[ISO7816.OFFSET_CLA] == VALIDATE_PIN_INS)
+			_validatePIN(apdu);
+		else 
+		{
+			_ensurePinValidity();
+			_executeInstruction(apdu, buffer);
+		}	
 	}
-	
-	/*
-	 * This method is used to authenticate the owner of the card using a PIN code.
+
+	/**
+	 * Authenticates the owner of the card using a PIN code.
 	 */
-	private void validatePIN(APDU apdu){
+	private void _validatePIN(APDU apdu)
+	{
 		byte[] buffer = apdu.getBuffer();
 		//The input data needs to be of length 'PIN_SIZE'.
 		//Note that the byte values in the Lc and Le fields represent values between
 		//0 and 255. Therefore, if a short representation is required, the following
 		//code needs to be used: short Lc = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
-		if(buffer[ISO7816.OFFSET_LC]==PIN_SIZE){
+		if(buffer[ISO7816.OFFSET_LC]==PIN_SIZE)
+		{
 			//This method is used to copy the incoming data in the APDU buffer.
 			apdu.setIncomingAndReceive();
 			//Note that the incoming APDU data size may be bigger than the APDU buffer 
@@ -204,128 +179,106 @@ public class IdentityCard extends Applet {
 			//}
 			if (pin.check(buffer, ISO7816.OFFSET_CDATA,PIN_SIZE)==false)
 				ISOException.throwIt(SW_VERIFICATION_FAILED);
-		}else ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
+		}
+		else 
+			ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
 	}
 	
-	/*
-	 * This method checks whether the user is authenticated and sends
-	 * the serial number.
+	/**
+	 * Ensures the execution can only continue if the PIN is valid.
 	 */
-	private void getSerial(APDU apdu){
-		//If the pin is not validated, a response APDU with the
-		//'SW_PIN_VERIFICATION_REQUIRED' status word is transmitted.
-		if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-		else{
-			//This sequence of three methods sends the data contained in
-			//'serial' with offset '0' and length 'serial.length'
-			//to the host application.
-			apdu.setOutgoing();
-			apdu.setOutgoingLength((short)serial.length);
-			apdu.sendBytesLong(serial,(short)0,(short)serial.length);
-		}
-	}	
-	
-	private void doHelloTime(APDU apdu){
-        if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-        else{
-    		byte[] buffer = apdu.getBuffer();
-			//byte Lc = buffer[ISO7816.OFFSET_LC];			
-			//byte bytesRead = (byte) apdu.setIncomingAndReceive();
-			//if(bytesRead != Lc) ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-			
-			// Incoming= "Hello[TimeMilliseconds]"			
-			//byte[] hello_string = new byte[]{72, 101, 108, 108, 111};
-			
-        }
-    }
-	
-	private void getName(APDU apdu){
-        if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-        else{
-            apdu.setOutgoing();
-            apdu.setOutgoingLength((short)name.length);
-            apdu.sendBytesLong(name,(short)0,(short)name.length);
-        }
-    }
-	
-	private void getAddress(APDU apdu){
-        if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-        else{
-            apdu.setOutgoing();
-            apdu.setOutgoingLength((short)address.length);
-            apdu.sendBytesLong(address,(short)0,(short)address.length);
-        }
-    }
-	
-	private void getCountry(APDU apdu){
-        if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-        else{
-            apdu.setOutgoing();
-            apdu.setOutgoingLength((short)country.length);
-            apdu.sendBytesLong(country,(short)0,(short)country.length);
-        }
-    }
-	
-	private void getBirthDate(APDU apdu){
-        if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-        else{
-            apdu.setOutgoing();
-            apdu.setOutgoingLength((short)birth_date.length);
-            apdu.sendBytesLong(birth_date,(short)0,(short)birth_date.length);
-        }
-    }
-	
-	private void getAge(APDU apdu){
-        if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-        else{
-            apdu.setOutgoing();
-            apdu.setOutgoingLength((short)age.length);
-            apdu.sendBytesLong(age,(short)0,(short)age.length);
-        }
-    }
-	
-	private void getGender(APDU apdu){
-        if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-        else{
-            apdu.setOutgoing();
-            apdu.setOutgoingLength((short)gender.length);
-            apdu.sendBytesLong(gender,(short)0,(short)gender.length);
-        }
-    }
-	
-	private void getSSN(APDU apdu){
-        if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-        else{
-            apdu.setOutgoing();
-            apdu.setOutgoingLength((short)ssn.length);
-            apdu.sendBytesLong(ssn,(short)0,(short)ssn.length);
-        }
-    }
-	
-	private void getPhoto(APDU apdu){
-		// OPDELEN IN BLOKKEN
-        if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-        else{
-            apdu.setOutgoing();
-            apdu.setOutgoingLength((short)photo.length);
-            apdu.sendBytesLong(photo,(short)0,(short)photo.length);
-        }
-    }
-	
-	private void setCurrentTime(APDU apdu){
-		if(!pin.isValidated())ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
-		else{
-			byte buffer[] = apdu.getBuffer();
-			
+	private void _ensurePinValidity() 
+	{
+		// If the pin is not validated, a response APDU with the
+		//	'SW_PIN_VERIFICATION_REQUIRED' status word is transmitted.
+		if(!pin.isValidated())
+			ISOException.throwIt(SW_PIN_VERIFICATION_REQUIRED);
+	}
 
-			// Lc byte denotes the number of bytes in the
-			// data field of the command APDU
-			byte numBytes = buffer[ISO7816.OFFSET_LC];
-			// indicate that this APDU has incoming data
-			// and receive data starting from the offset
-			// ISO7816.OFFSET_CDATA following the 5 header
-			// bytes.			
-			
+	/**
+	 * Executes the current instruction
+	 */
+	private void _executeInstruction(APDU apdu, byte[] buffer) 
+	{
+		//A switch statement is used to select a method depending on the instruction
+		switch(buffer[ISO7816.OFFSET_INS])
+		{
+				
+			case GET_SERIAL_INS:
+				_getCardData(apdu, gender);
+				break;
+			case GET_NAME_INS:
+				_getCardData(apdu, name);
+				break;
+			case GET_ADDRESS_INS:
+				_getCardData(apdu, address);
+				break;
+			case GET_COUNTRY_INS:
+				_getCardData(apdu, country);
+				break;
+			case GET_BIRTH_DATE_INS:
+				_getCardData(apdu, birth_date);
+				break;
+			case GET_AGE_INS:
+				_getCardData(apdu, age);
+				break;
+			case GET_GENDER_INS:
+				_getCardData(apdu, gender);
+				break;
+			case GET_SSN_INS:
+				_getCardData(apdu, ssn);
+				break;
+			case GET_PHOTO_INS:
+				_getCardData(apdu, photo);
+				break;
+			case DO_HELLO_TIME:
+				_doHelloTime(apdu);
+				break;
+				
+			//If no matching instructions are found it is indicated in the status word of the response.
+			//This can be done by using this method. As an argument a short is given that indicates
+			//  the type of warning. There are several predefined warnings in the 'ISO7816' class.
+			default: ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
 		}
 	}
+	
+	// Methods
+	
+	
+	private void _doHelloTime(APDU apdu)
+	{
+
+		byte[] buffer = apdu.getBuffer();
+		//byte Lc = buffer[ISO7816.OFFSET_LC];			
+		//byte bytesRead = (byte) apdu.setIncomingAndReceive();
+		//if(bytesRead != Lc) ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
+		
+		// Incoming= "Hello[TimeMilliseconds]"			
+		//byte[] hello_string = new byte[]{72, 101, 108, 108, 111};
+			
+    }
+	
+	
+	private void setCurrentTime(APDU apdu)
+	{
+		byte buffer[] = apdu.getBuffer();
+		
+		// Lc byte denotes the number of bytes in the
+		// data field of the command APDU
+		byte numBytes = buffer[ISO7816.OFFSET_LC];
+		// indicate that this APDU has incoming data
+		// and receive data starting from the offset
+		// ISO7816.OFFSET_CDATA following the 5 header
+		// bytes.			
+	}
+	
+	private void _getCardData(APDU apdu, byte[] item)
+	{
+		//This sequence of three methods sends the data contained in
+		//'serial' with offset '0' and length 'serial.length'
+		//to the host application.
+        apdu.setOutgoing();
+        apdu.setOutgoingLength((short)item.length);
+        apdu.sendBytesLong(item,(short)0,(short)item.length);
+    }
 }

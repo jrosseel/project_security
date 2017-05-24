@@ -139,7 +139,10 @@ public class IdentityCard extends Applet {
 		
 		if(buffer[ISO7816.OFFSET_CLA] == VALIDATE_PIN_INS)
 			_validatePIN(apdu);
-		else 
+	
+		else if(buffer[ISO7816.OFFSET_LC] == DO_HELLO_TIME)
+			_doHelloTime(apdu);
+		else
 		{
 			_ensurePinValidity();
 			_executeInstruction(apdu, buffer);
@@ -231,9 +234,6 @@ public class IdentityCard extends Applet {
 			case GET_PHOTO_INS:
 				_getCardData(apdu, photo);
 				break;
-			case DO_HELLO_TIME:
-				_doHelloTime(apdu);
-				break;
 				
 			//If no matching instructions are found it is indicated in the status word of the response.
 			//This can be done by using this method. As an argument a short is given that indicates
@@ -254,24 +254,36 @@ public class IdentityCard extends Applet {
 		byte numBytes = buffer[ISO7816.OFFSET_LC];
 		byte byteRead = (byte)(apdu.setIncomingAndReceive());
 		
+		// it is an error if the number of data bytes read does not match the number in Lc byte
+		if ( ( numBytes != 1 ) || (byteRead != 1) )
+		 ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
 		
-			
+		// Hello
+		byte[] hello = new byte[]{72, 101, 108, 108, 111};
+		// Justify offset to get the current time
+		for(short i = 0; i < hello.length; i++){
+			if(buffer[ISO7816.OFFSET_CDATA + i] != hello[i]) ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		
+		short time_length = (short) last_validation_time.length;
+		byte new_timestamp = 0;
+		for(short i=0; i<time_length; i++)
+		{
+			if(last_validation_time[i]<(buffer[i]-sigma[i]))
+			{
+				// new timestamp needed
+				new_timestamp = 1;
+			}
+		}
+		
+		// Send response to middleware
+		short Le = apdu.setOutgoing();	
+		apdu.setOutgoingLength(Le);
+		buffer[0] = new_timestamp;
+		apdu.sendBytes((short) 0, Le);
+
     }
-	
-	
-	private void setCurrentTime(APDU apdu)
-	{
-		byte buffer[] = apdu.getBuffer();
 		
-		// Lc byte denotes the number of bytes in the
-		// data field of the command APDU
-		byte numBytes = buffer[ISO7816.OFFSET_LC];
-		// indicate that this APDU has incoming data
-		// and receive data starting from the offset
-		// ISO7816.OFFSET_CDATA following the 5 header
-		// bytes.			
-	}
-	
 	private void _getCardData(APDU apdu, byte[] item)
 	{
 		//This sequence of three methods sends the data contained in

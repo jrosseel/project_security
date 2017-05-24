@@ -71,11 +71,22 @@ public class Client {
 		
 			// Step 1: SC <- M
 			// Send Hello[CurrentTime] to the card
+			System.out.println("Sending \"Hello\" [CurrentTime] to the card ...");
+			
 			long current= System.currentTimeMillis();
-			byte[] message = ByteBuffer.allocate(13).put("Hello".getBytes()).putLong(current).array();
+			byte[] message = ByteBuffer.allocate(18).put("Hello".getBytes()).putLong(current).array();
 			
 			a = new CommandAPDU(IDENTITY_CARD_CLA, DO_HELLO_TIME, 0x00, 0x00, message, 1);
-			r = c.transmit(a);						
+			r = c.transmit(a);		
+			
+			System.out.println("Checking if revalidation request is needed ...");
+			
+			// Step 1: SC -> M 
+			// Check if revalidation request is needed
+			System.out.println(filterResponse(r.getData(), message.length)[0]);
+			
+			
+			
 		} catch (Exception e) {
 			throw e;
 		}
@@ -84,7 +95,14 @@ public class Client {
 		}
 	}
 	
-	
+	private static byte[] filterResponse(byte[] r, int l){
+		l += 5;
+		byte[] s = new byte[r.length - l];
+		for(int i = l; i<r.length; i++){
+			s[i - l] = r[i];
+		}
+		return s;
+	}
 	
 		
 	

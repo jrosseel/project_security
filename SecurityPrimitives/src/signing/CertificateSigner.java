@@ -14,7 +14,6 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 import data.SignedCertificate;
-import encryption.ByteSerializer;
 import encryption.Cryptography;
 import keystore.KeyReader;
 import settings.Config;
@@ -52,9 +51,9 @@ public class CertificateSigner
 		return _caKeyStore.readPrivate(_caKey, _caKeyPasswd);
 	}
 	
-	// TODO: Read from certificate, instead of hardcode
 	private String _getIssuer()
 	{
+		// TODO: Read from certificate, instead of hardcode
 		return Config.CA_SUBJECT;
 	}
 }

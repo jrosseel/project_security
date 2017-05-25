@@ -29,6 +29,8 @@ public class Cryptography
 		// Encode the object
 		byte[] encodedObject = ByteSerializer.EncodeObject(obj);
 		
+		byte[] hashed = Hasher.hashObject(encodedObject);
+		
 		// Encrypt the object, using the given key
 		Cipher rsaenc = Cipher.getInstance("RSA");
 		rsaenc.init(Cipher.ENCRYPT_MODE, key);

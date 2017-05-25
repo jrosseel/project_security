@@ -10,12 +10,10 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
 import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 import be.security.shared.data.SignedData;
-import be.security.shared.encryption.ByteSerializer;
 import be.security.shared.encryption.Cryptography;
 import be.security.shared.encryption.Hasher;
 import be.security.shared.keystore.KeyReader;
@@ -44,7 +42,6 @@ public class DataSigner
 		
 		// Encode the object
 		byte[] hash = Hasher.hashObject(data);
-		
 		byte[] signature = Cryptography.encrypt(hash, pen);
 		
 		return new SignedData<T>(data, _issuer, signature);

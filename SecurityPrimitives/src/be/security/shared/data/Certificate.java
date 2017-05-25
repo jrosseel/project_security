@@ -1,4 +1,4 @@
-package data;
+package be.security.shared.data;
 
 import java.io.Serializable;
 

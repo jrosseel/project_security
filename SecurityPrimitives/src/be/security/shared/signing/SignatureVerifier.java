@@ -1,17 +1,19 @@
-package signing;
+package be.security.shared.signing;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
-import data.SignedCertificate;
-import encryption.ByteSerializer;
-import keystore.KeyReader;
+import be.security.shared.data.SignedData;
+import be.security.shared.encryption.ByteSerializer;
+import be.security.shared.keystore.KeyReader;
 
 public class SignatureVerifier 
 {
@@ -25,14 +27,15 @@ public class SignatureVerifier
 	}
 	
 	/**
-	 * Verifies if the signed certificate is valid. 
+	 * Verifies if the signed data is valid. 
+	 * @param <T>
 	 */
-	public boolean verify(SignedCertificate certificate)
+	public <T extends Serializable> boolean verify(SignedData<T> data)
 			throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException 
 	{
 		return verify(
-				ByteSerializer.EncodeObject(certificate.certificate), 
-				certificate.signature);
+				ByteSerializer.EncodeObject(data.data), 
+				data.signature);
 	}
 	
 	/**

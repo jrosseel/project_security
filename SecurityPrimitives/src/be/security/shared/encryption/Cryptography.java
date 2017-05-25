@@ -1,4 +1,4 @@
-package encryption;
+package be.security.shared.encryption;
 
 import java.io.IOException;
 import java.io.Serializable;

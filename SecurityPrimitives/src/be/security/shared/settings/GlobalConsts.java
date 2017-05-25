@@ -1,6 +1,6 @@
-package settings;
+package be.security.shared.settings;
 
-public class Config 
+public class GlobalConsts 
 {
 	public final static String CA_SUBJECT = "CN=Global Masterkey CA,OU=Master Key Holding Vault,O=Master Key Holding Ltd.,L=Luxembourg,ST=Brussels,C=BE,E=contact@jenterosseel.com";
 	

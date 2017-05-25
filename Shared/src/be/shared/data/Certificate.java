@@ -1,4 +1,4 @@
-package be.msec.shared.data;
+package be.shared.data;
 
 import java.io.Serializable;
 

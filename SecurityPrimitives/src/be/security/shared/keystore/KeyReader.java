@@ -1,4 +1,4 @@
-package keystore;
+package be.security.shared.keystore;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -11,7 +11,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
-import settings.Config;
+import be.security.shared.settings.GlobalConsts;
 
 
 public class KeyReader 
@@ -23,7 +23,7 @@ public class KeyReader
 		(String keyStoreName, String storePassword)
 	{
 		this.keyStoreLoc = 
-				Config.KEY_STORE_FOLDER + keyStoreName + ".jks";
+				GlobalConsts.KEY_STORE_FOLDER + keyStoreName + ".jks";
 		this.storePassword = storePassword;
 	}
 	
@@ -54,7 +54,7 @@ public class KeyReader
 			throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException 
 	{
 		
-		KeyStore ks = KeyStore.getInstance(Config.KEY_STORE_TYPE);
+		KeyStore ks = KeyStore.getInstance(GlobalConsts.KEY_STORE_TYPE);
 		
 		FileInputStream fis = new FileInputStream(keyStoreLoc);
 		ks.load(fis, password.toCharArray());

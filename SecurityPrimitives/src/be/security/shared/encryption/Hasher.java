@@ -1,16 +1,26 @@
 package be.security.shared.encryption;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import be.security.shared.settings.GlobalConsts;
+
 public class Hasher 
 {
-	private static final String _HASH_ALGORITHM = "SHA-256";
+	public static byte[] hashObject(Serializable obj)
+			throws NoSuchAlgorithmException, IOException 
+	{
+		byte[] encodedObj = ByteSerializer.EncodeObject(obj);
+		
+		return hashBytes(encodedObj);
+	}
 	
-	public static byte[] hashObject(byte[] obj)
+	public static byte[] hashBytes(byte[] obj)
 			throws NoSuchAlgorithmException 
 	{
-		MessageDigest md = MessageDigest.getInstance(_HASH_ALGORITHM);
+		MessageDigest md = MessageDigest.getInstance(GlobalConsts.HASH_ALGORITHM);
 		return md.digest(obj);
 	}
 }

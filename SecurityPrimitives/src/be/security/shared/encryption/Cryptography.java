@@ -11,13 +11,14 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import be.security.shared.settings.GlobalConsts;
+
 
 /**
  * Class used to encrypt and decrypt data.
  */
 public class Cryptography 
 {
-
 	/**
 	 * Encrypt an object, and transform it into a bytearray.
 	 * 
@@ -28,31 +29,35 @@ public class Cryptography
 	{
 		// Encode the object
 		byte[] encodedObject = ByteSerializer.EncodeObject(obj);
-		
-		byte[] hashed = Hasher.hashObject(encodedObject);
-		
+
+		return encrypt(encodedObject, key);
+	}
+	
+	public static byte[] encrypt(byte[] encodedObject, Key key) 
+			throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IOException, IllegalBlockSizeException, BadPaddingException 
+	{
 		// Encrypt the object, using the given key
-		Cipher rsaenc = Cipher.getInstance("RSA");
+		Cipher rsaenc = Cipher.getInstance(GlobalConsts.CRYPTO_ALGORITHM);
 		rsaenc.init(Cipher.ENCRYPT_MODE, key);
 		
 		byte[] encrypted = rsaenc.doFinal(encodedObject);
 		
 		return encrypted;
 	}
-	
+
 	/**
 	 * Decrypt an in byte-array stored object, and transform it back into the object.
 	 */
-	public static Object decrypt(byte[] message, Key key) 
+	public static <T extends Serializable> T decrypt(byte[] message, Key key) 
 			throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IOException, IllegalBlockSizeException, BadPaddingException, ClassNotFoundException 
 	{        
 		// Depcrypt the object, using the given key
-		Cipher rsadec = Cipher.getInstance("RSA");      
+		Cipher rsadec = Cipher.getInstance(GlobalConsts.CRYPTO_ALGORITHM);      
         rsadec.init(Cipher.DECRYPT_MODE, key);
         byte[] decrypted = rsadec.doFinal(message);
 		
         Object toObject = ByteSerializer.DecodeObject(decrypted);
         
-		return toObject;
+		return (T) toObject;
 	}
 }

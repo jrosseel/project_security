@@ -11,7 +11,7 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 
 import be.security.shared.data.SignedData;
-import be.security.shared.encryption.ByteSerializer;
+import be.security.shared.encryption.Hasher;
 import be.security.shared.keystore.KeyReader;
 
 public class SignatureVerifier 
@@ -32,8 +32,10 @@ public class SignatureVerifier
 	public <T extends Serializable> boolean verify(SignedData<T> data)
 			throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException 
 	{
+		byte[] hash = Hasher.hashObject(data);
+		
 		return verify(
-				ByteSerializer.EncodeObject(data.data), 
+				hash, 
 				data.signature);
 	}
 	

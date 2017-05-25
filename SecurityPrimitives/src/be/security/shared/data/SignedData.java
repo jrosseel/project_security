@@ -12,6 +12,7 @@ public class SignedData<T extends Serializable>
 {
 	public SignedData(T data, String issuer, byte[] signature) {
 		this.data = data;
+		
 		this.issuer = issuer;
 		this.signature = signature;
 	}

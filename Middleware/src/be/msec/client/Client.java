@@ -4,6 +4,7 @@ import be.msec.client.connection.Connection;
 import be.msec.client.connection.IConnection;
 import be.msec.client.connection.SimulatedConnection;
 import be.msec.smartcard.InstructionCodes;
+import be.msec.smartcard.SignalCodes;
 
 import java.nio.ByteBuffer;
 import java.text.DateFormat;
@@ -62,7 +63,7 @@ public class Client {
 			r = c.transmit(a);
 
 			System.out.println(r);
-			if (r.getSW()==InstructionCodes.SW_VERIFICATION_FAILED) throw new Exception("PIN INVALID");
+			if (r.getSW()==SignalCodes.SW_VERIFICATION_FAILED) throw new Exception("PIN INVALID");
 			else if(r.getSW()!=0x9000) throw new Exception("Exception on the card: " + r.getSW());
 			System.out.println("PIN Verified");
 		

@@ -20,9 +20,6 @@ public class InstructionCodes {
 	public static final byte GET_SSN_INS = (byte)0x35;
 	public final static byte PIN_TRY_LIMIT =(byte)0x03;
 	public final static byte PIN_SIZE =(byte)0x04;
-	
-	public final static byte GET_TIMESTAP_DATA=(byte)0x09;
 		
-	public final static short SW_VERIFICATION_FAILED = (byte)0x6300;
-	public final static short SW_PIN_VERIFICATION_REQUIRED = (byte)0x6301;
+	
 }

@@ -117,7 +117,7 @@ public class IdentityCard extends Applet {
 			//	readCount = apdu.receiveBytes(ISO7816.OFFSET_CDATA);
 			//}
 			if (pin.check(buffer, ISO7816.OFFSET_CDATA,InstructionCodes.PIN_SIZE)==false)
-				ISOException.throwIt(InstructionCodes.SW_VERIFICATION_FAILED);
+				ISOException.throwIt(SignalCodes.SW_VERIFICATION_FAILED);
 		}
 		else 
 			ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
@@ -131,7 +131,7 @@ public class IdentityCard extends Applet {
 		// If the pin is not validated, a response APDU with the
 		//	'SW_PIN_VERIFICATION_REQUIRED' status word is transmitted.
 		if(!pin.isValidated())
-			ISOException.throwIt(InstructionCodes.SW_PIN_VERIFICATION_REQUIRED);
+			ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
 	}
 
 	/**

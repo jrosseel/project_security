@@ -1,15 +1,11 @@
 package be.msec.client;
 
-import be.msec.client.connection.Connection;
+import be.msec.cardprimitives.smartcard.InstructionCodes;
+import be.msec.cardprimitives.smartcard.SignalCodes;
 import be.msec.client.connection.IConnection;
 import be.msec.client.connection.SimulatedConnection;
-import be.msec.smartcard.InstructionCodes;
-import be.msec.smartcard.SignalCodes;
 
 import java.nio.ByteBuffer;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import javax.smartcardio.*;
 

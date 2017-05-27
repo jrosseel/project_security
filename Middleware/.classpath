@@ -4,6 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="libs/apduio.jar"/>
 	<classpathentry kind="src" path="/SecurityPrimitives"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/JavaCard"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/CardPrimitives"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

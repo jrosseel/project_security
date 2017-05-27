@@ -1,4 +1,4 @@
-package be.msec.smartcard;
+package be.msec.cardprimitives.smartcard;
 
 public class SignalCodes {
 

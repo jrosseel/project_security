@@ -2,18 +2,17 @@ package be.msec.smartcard;
 
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
-
 import javacard.framework.APDU;
 import javacard.framework.Applet;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.OwnerPIN;
+import javacard.security.RSAPrivateKey;
 
 public class IdentityCard extends Applet {
 	
 	private CardData card;
     private final byte[] sigma;
-	private byte[] serial = new byte[]{(byte)0x4A, (byte)0x61, (byte)0x6e};
 	private OwnerPIN pin;
 	
 	//input above instance variables into info below
@@ -28,7 +27,7 @@ public class IdentityCard extends Applet {
 		pin = new OwnerPIN(InstructionCodes.PIN_TRY_LIMIT,InstructionCodes.PIN_SIZE);
 		pin.update(new byte[]{0x01,0x02,0x03,0x04},(short) 0, InstructionCodes.PIN_SIZE); 
 		
-		sigma = new byte[]{56, 54, 52, 48, 48, 48, 48, 48}; // 1 day = 86400000 milliseconds 
+		sigma = new byte[]{ 0x00, 0x00, 0x00, 0x00, 0x05, 0x26, 0x5C, 0x00 }; // 1 day = 86400000 milliseconds 
 		card = new CardData();
 
 		/*
@@ -72,19 +71,8 @@ public class IdentityCard extends Applet {
 		
 		
 		//Check whether the indicated class of instructions is compatible with this applet.
-		if (buffer[ISO7816.OFFSET_CLA] != InstructionCodes.IDENTITY_CARD_CLA)
-			ISOException.throwIt(ISO7816.SW_CLA_NOT_SUPPORTED);
-		
-		if(buffer[ISO7816.OFFSET_CLA] == InstructionCodes.VALIDATE_PIN_INS)
-			_validatePIN(apdu);
-	
-		else if(buffer[ISO7816.OFFSET_LC] == InstructionCodes.DO_HELLO_TIME)
-			_doHelloTime(apdu);
-		else
-		{
-			_ensurePinValidity();
-			_executeInstruction(apdu, buffer);
-		}	
+		if (buffer[ISO7816.OFFSET_CLA] != InstructionCodes.IDENTITY_CARD_CLA)ISOException.throwIt(ISO7816.SW_CLA_NOT_SUPPORTED);
+		_executeInstruction(apdu, buffer);
 	}
 
 	/**
@@ -124,17 +112,6 @@ public class IdentityCard extends Applet {
 		else 
 			ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
 	}
-	
-	/**
-	 * Ensures the execution can only continue if the PIN is valid.
-	 */
-	private void _ensurePinValidity() 
-	{
-		// If the pin is not validated, a response APDU with the
-		//	'SW_PIN_VERIFICATION_REQUIRED' status word is transmitted.
-		if(!pin.isValidated())
-			ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
-	}
 
 	/**
 	 * Executes the current instruction
@@ -143,8 +120,10 @@ public class IdentityCard extends Applet {
 	{
 		//A switch statement is used to select a method depending on the instruction
 		switch(buffer[ISO7816.OFFSET_INS])
-		{
-				
+		{				
+			case InstructionCodes.VALIDATE_PIN_INS:
+				_validatePIN(apdu);
+				break;
 			case InstructionCodes.GET_NAME_INS:
 				_getCardData(apdu, card.getName());
 				break;
@@ -169,6 +148,9 @@ public class IdentityCard extends Applet {
 			case InstructionCodes.GET_PHOTO_INS:
 				_getCardData(apdu, card.getPhoto());
 				break;
+			case InstructionCodes.DO_HELLO_TIME:
+				_doHelloTime(apdu);
+				break;
 				
 			//If no matching instructions are found it is indicated in the status word of the response.
 			//This can be done by using this method. As an argument a short is given that indicates
@@ -178,15 +160,48 @@ public class IdentityCard extends Applet {
 	}
 	
 	// Methods
-	
-	
 	private void _doHelloTime(APDU apdu)
 	{
+		if ( ! pin.isValidated()) ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
+		else{
+			byte[] buffer_in = apdu.getBuffer();
+			
+			short length_hello = 5;
+			short offset = (short) (ISO7816.OFFSET_CDATA+length_hello); 
+			
+			byte result=0;
+			
+			for(short i=0; i<8;i++)
+			{
+				if(!(card.getLastValidationTime()[i] == (buffer_in[offset+i] - sigma[i])))
+				{
+					if(card.getLastValidationTime()[i]<(buffer_in[offset+i]-sigma[i]))
+					{
+						result=1;
+					}
+					break;
+				}
+			}
+			
+			byte[] buffer_out = new byte[]{result};
+			
+			apdu.setOutgoing();
+			apdu.setOutgoingLength((short)buffer_out.length);
+			apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
+			
+		}
+	}
+		
 
-		byte[] buffer = apdu.getBuffer();
+		
+		
+	/*	
+		
+		
+		
+		byte[] in = apdu.getBuffer();
 
-		// Lc byte denotes the number of bytes in the data field of the command APDU
-		byte numBytes = buffer[ISO7816.OFFSET_LC];
+		byte numBytes = in[ISO7816.OFFSET_LC];
 		byte byteRead = (byte)(apdu.setIncomingAndReceive());
 		
 		// it is an error if the number of data bytes read does not match the number in Lc byte
@@ -194,38 +209,33 @@ public class IdentityCard extends Applet {
 		 ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
 		
 		// Hello
-		byte[] hello = new byte[]{72, 101, 108, 108, 111};
+		byte[] hello = new byte[]{ 0x48, 0x65, 0x6c, 0x6c, 0x6f };
 		// Justify offset to get the current time
 		for(short i = 0; i < hello.length; i++){
-			if(buffer[ISO7816.OFFSET_CDATA + i] != hello[i]) ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+			if(in[ISO7816.OFFSET_CDATA + i] != hello[i]) ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		
-		short time_length = (short) card.getLastValidationTime().length;
-		byte new_timestamp = 0;
-		for(short i=0; i<time_length; i++)
+		// put currentTime in bytearray
+		byte[] currentTime = new byte[Long.BYTES];
+		for(short i=0; i<Long.BYTES; i++)
 		{
-			if(card.getLastValidationTime()[i]<(buffer[i]-sigma[i]))
-			{
-				// new timestamp needed
-				new_timestamp = 1;
-			}
+			currentTime[i] = in[ISO7816.OFFSET_CDATA + i];
 		}
 		
-		// Send response to middleware
-		short Le = apdu.setOutgoing();	
-		apdu.setOutgoingLength(Le);
-		buffer[0] = new_timestamp;
-		apdu.sendBytes((short) 0, Le);
+		byte[] buffer = currentTime;
+		apdu.setOutgoing();
+		apdu.setOutgoingLength((short)buffer.length);
+		apdu.sendBytesLong(buffer,(short)0,(short)buffer.length);
 
-    }
+    }*/
 		
 	private void _getCardData(APDU apdu, byte[] item)
 	{
-		//This sequence of three methods sends the data contained in
-		//'serial' with offset '0' and length 'serial.length'
-		//to the host application.
-        apdu.setOutgoing();
-        apdu.setOutgoingLength((short)item.length);
-        apdu.sendBytesLong(item,(short)0,(short)item.length);
+		if(!pin.isValidated())ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
+		else{
+	        apdu.setOutgoing();
+	        apdu.setOutgoingLength((short)item.length);
+	        apdu.sendBytesLong(item,(short)0,(short)item.length);
+		}
     }
 }

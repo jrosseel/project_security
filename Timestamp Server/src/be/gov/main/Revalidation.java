@@ -18,10 +18,9 @@ import be.security.shared.signing.DataSigner;
 
 public class Revalidation
 {
-	public static SignedData<Date> revalidate() 
+	public static SignedData<Long> revalidate(long date) 
 						throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, IOException {
 		
-		Date now = new Date();
 		
 		DataSigner signer = new DataSigner(Config.KEY_STORE_NAME, 
 										   Config.KEYSTORE_LOC, 
@@ -29,6 +28,6 @@ public class Revalidation
 										   Config.SERVER_KEY_PASSWD, 
 										   Config.SERVER_ISSUER);
 		
-		return signer.sign(now);
+		return signer.sign(date);
 	}
 }

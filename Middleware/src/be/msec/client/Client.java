@@ -6,6 +6,8 @@ import be.msec.client.connection.IConnection;
 import be.msec.client.connection.SimulatedConnection;
 
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.smartcardio.*;
 
@@ -63,21 +65,36 @@ public class Client {
 			else if(r.getSW()!=0x9000) throw new Exception("Exception on the card: " + r.getSW());
 			System.out.println("PIN Verified");
 		
-			// Step 1: SC <- M
+			// Update time - Step 1: SC <- M
 			// Send Hello[CurrentTime] to the card
-			System.out.println("Sending \"Hello\" [CurrentTime] to the card ...");
+			System.out.println("Sending \"Hello\" [CurrentTime] to the card");
 			
 			long current= System.currentTimeMillis();
-			byte[] message = ByteBuffer.allocate(18).put("Hello".getBytes()).putLong(current).array();
-			
-			a = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_HELLO_TIME, 0x00, 0x00, message, 1);
+			// Allocate 13 bytes: 5 for 'Hello' and 8 for the time (long = 8 bytes)
+			byte[] message = ByteBuffer.allocate(13).put("Hello".getBytes()).putLong(current).array();
+
+			a = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_HELLO_TIME, 0x00, 0x00, message,0x7f);
 			r = c.transmit(a);		
 			
-			System.out.println("Checking if revalidation request is needed ...");
+			if (r.getSW()!=0x9000) throw new Exception("Sending current time failed");
+			
+			System.out.println("Checking if revalidation request is needed");
+			short result = r.getData()[message.length+6];	
+			if(result==0x01)
+			{
+				System.out.println("New revalidation request needed");
+				// Contact government to get current time
+				
+			}
+			else if(result==0x00)
+			{
+				System.out.println("No new revalidation request needed");
+			}
+		
 			
 			// Step 1: SC -> M 
 			// Check if revalidation request is needed
-			System.out.println(filterResponse(r.getData(), message.length)[0]);
+			//System.out.println(filterResponse(r.getData(), message.length)[0]);
 			
 			
 			
@@ -98,6 +115,14 @@ public class Client {
 		return s;
 	}
 	
+	private static void printBytes(byte[] data) {
+		String sb1 = "";
+		for (byte b: data) {
+			sb1 +="0x" +  String.format("%02x", b) + " ";
+		}
+		System.out.println(sb1);
+		
+	}
 		
 	
 	

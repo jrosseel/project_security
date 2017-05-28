@@ -148,8 +148,11 @@ public class IdentityCard extends Applet {
 			case InstructionCodes.GET_PHOTO_INS:
 				_getCardData(apdu, card.getPhoto());
 				break;
-			case InstructionCodes.DO_HELLO_TIME:
+			case InstructionCodes.DO_HELLO_INS:
 				_doHelloTime(apdu);
+				break;
+			case InstructionCodes.DO_NEW_TIME_INS:
+				_doNewTime(apdu);
 				break;
 				
 			//If no matching instructions are found it is indicated in the status word of the response.
@@ -190,8 +193,39 @@ public class IdentityCard extends Applet {
 			apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
 			
 		}
+	}		
+	
+	private void _doNewTime(APDU apdu)
+	{
+		if ( ! pin.isValidated()) ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
+		else{
+			byte[] buffer_in = apdu.getBuffer();
+			
+			short length_hello = 5;
+			short offset = (short) (ISO7816.OFFSET_CDATA+length_hello); 
+			
+			byte result=0;
+			
+			for(short i=0; i<8;i++)
+			{
+				if(!(card.getLastValidationTime()[i] == (buffer_in[offset+i] - sigma[i])))
+				{
+					if(card.getLastValidationTime()[i]<(buffer_in[offset+i]-sigma[i]))
+					{
+						result=1;
+					}
+					break;
+				}
+			}
+			
+			byte[] buffer_out = new byte[]{result};
+			
+			apdu.setOutgoing();
+			apdu.setOutgoingLength((short)buffer_out.length);
+			apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
+			
+		}
 	}
-		
 
 		
 		

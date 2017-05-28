@@ -7,11 +7,10 @@ public class GlobalConsts
 	public final static String KEY_STORE_TYPE = "JKS";
 	
 	// Aanpassen bij veranderende gebruiker
-	private final static String _LOCAL_FOLDER = "C:\\Users\\JRosseel\\Google Drive\\School\\Master\\Semester 4\\Project Security";
-	public final static String KEY_STORE_FOLDER = _LOCAL_FOLDER + "\\workspace\\KeysAndCertificates";
-
+	private final static String _LOCAL_FOLDER = "C:\\Users\\Tim\\Desktop\\project_sic";
+	public final static String KEY_STORE_FOLDER = _LOCAL_FOLDER + "\\workspace\\KeysAndCertificates\\";
 	
 	public final static String CRYPTO_ALGORITHM = "RSA"; 
-	public static final String HASH_ALGORITHM = "SHA-256";
+	public static final String HASH_ALGORITHM = "SHA-1";
 	
 }	

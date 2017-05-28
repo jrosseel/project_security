@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
@@ -22,6 +23,7 @@ public class SignatureVerifier
 			throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException 
 	{
 		KeyReader _caKeyStore = new KeyReader(caKeyStoreName, caKeyStorePasswd);
+		
 		_caPublicKey = _caKeyStore.readPublic(caKey);	
 	}
 	
@@ -29,14 +31,14 @@ public class SignatureVerifier
 	 * Verifies if the signed data is valid. 
 	 * @param <T>
 	 */
-	public <T extends Serializable> boolean verify(SignedData<T> data)
+	public <T extends Serializable> boolean verify(SignedData<T> signedData)
 			throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException 
 	{
-		byte[] hash = Hasher.hashObject(data);
+		byte[] hash = Hasher.hashObject(signedData.data);
 		
 		return verify(
 				hash, 
-				data.signature);
+				signedData.signature);
 	}
 	
 	/**
@@ -46,16 +48,17 @@ public class SignatureVerifier
 	 * @param signedData: The signed certificate
 	 * 
 	 * @return Whether the signedData represents the same object signed by CA
+	 * @throws IOException 
 	 */
-	public boolean verify(byte[] data, byte[] signedData) throws NoSuchAlgorithmException, SignatureException, InvalidKeyException {
-		Signature sig = Signature.getInstance("RSA");
+	public boolean verify(byte[] hash, byte[] signature) throws NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
+		Signature sig = Signature.getInstance("SHA1withRSA");
 		
 		// Set the public key used for verification
 		sig.initVerify(_caPublicKey);
 		// Set the certificate
-		sig.update(data);
+		sig.update(hash);
 		
 		// Verify the signed data matches the signature
-		return sig.verify(signedData);
+		return sig.verify(signature);
 	}
 }

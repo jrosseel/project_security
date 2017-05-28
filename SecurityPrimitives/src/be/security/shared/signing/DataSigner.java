@@ -6,6 +6,8 @@ import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
@@ -26,9 +28,9 @@ public class DataSigner
 				   _penPasswd,
 				   _issuer;
 
-	public DataSigner(String penKeyStore, String penKeyStorePasswd, String penKey, String penKeyPasswd, String issuer) 
+	public DataSigner(String penKeyStore, String penKeyStoreLoc, String penKey, String penKeyPasswd, String issuer) 
 	{
-		_penKeyStore = new KeyReader(penKeyStore, penKeyStorePasswd);
+		_penKeyStore = new KeyReader(penKeyStore, penKeyPasswd);
 		
 		_penKey = penKey;
 		_penPasswd = penKeyPasswd;
@@ -36,14 +38,19 @@ public class DataSigner
 	}
 	
 	public <T extends Serializable> SignedData<T> sign(T data) 
-			throws IOException, UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException 
+			throws IOException, UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException 
 	{
 		PrivateKey pen = _getPen();
 		
 		// Encode the object
 		byte[] hash = Hasher.hashObject(data);
-		byte[] signature = Cryptography.encrypt(hash, pen);
-		
+			
+		Signature signer;
+	    signer = Signature.getInstance("SHA1withRSA");
+	    signer.initSign(pen);
+	    signer.update(hash);
+	    byte[] signature = signer.sign();
+		    
 		return new SignedData<T>(data, _issuer, signature);
 	}
 	

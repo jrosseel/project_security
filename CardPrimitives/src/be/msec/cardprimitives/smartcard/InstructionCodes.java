@@ -10,7 +10,7 @@ public class InstructionCodes {
 	
 	public static final byte GET_NAME_INS = (byte)0x24;
 	public static final byte GET_SERIAL_INS = (byte)0x26;
-	public static final byte DO_HELLO_TIME = (byte)0x28;
+	public static final byte DO_HELLO_INS = (byte)0x28;
 	public static final byte GET_ADDRESS_INS = (byte)0x29;
 	public static final byte GET_COUNTRY_INS = (byte)0x30;
 	public static final byte GET_BIRTH_DATE_INS = (byte)0x31;
@@ -18,8 +18,10 @@ public class InstructionCodes {
 	public static final byte GET_GENDER_INS = (byte)0x33;
 	public static final byte GET_PHOTO_INS = (byte)0x34;
 	public static final byte GET_SSN_INS = (byte)0x35;
+	public static final byte DO_NEW_TIME_INS = (byte)0x36;
+	
 	public final static byte PIN_TRY_LIMIT =(byte)0x03;
 	public final static byte PIN_SIZE =(byte)0x04;
-		
+	
 	
 }

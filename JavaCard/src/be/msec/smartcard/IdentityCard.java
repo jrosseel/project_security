@@ -205,7 +205,7 @@ public class IdentityCard extends Applet {
 	private void _doHelloTime(APDU apdu)
 	{
 		if ( ! pin.isValidated()) ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
-		else{
+		else {
 			byte[] buffer_in = apdu.getBuffer();
 			
 			/*
@@ -280,12 +280,12 @@ public class IdentityCard extends Applet {
 			Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
 									
 			// gives an error => see how to create public key from byte array
-<<<<<<< HEAD
+
 			sig.init((Key) getPublicKeyGov(), Signature.MODE_VERIFY);
-=======
+
 			// 
 			/*sig.init((Key)getPublicKeyGov(), Signature.MODE_VERIFY);
->>>>>>> origin/master
+
 			if(sig.verify(hash, (short)0, (short)hash.length, signature, (short)0, (short)signature.length))
 			{
 				result = 1;
@@ -301,7 +301,7 @@ public class IdentityCard extends Applet {
 			apdu.setOutgoing();
 			apdu.setOutgoingLength((short)buffer_out.length);
 			apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
-			
+			*/
 		}
 	}
 	

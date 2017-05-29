@@ -13,7 +13,8 @@ public class Config
 	
 	//#region Keys
 	public static final String KEYSTORE_LOC = GlobalConsts.KEY_STORE_FOLDER;
-	public static final String KEY_STORE_NAME = "government";
+	public static final String KEY_STORE_NAME   = "government";
+	public static final String KEY_STORE_PASSWD = "123456";
 	
 	public static final String SERVER_KEY_NAME	 = "gov_timestamp_server";
 	public static final String SERVER_KEY_PASSWD = "";

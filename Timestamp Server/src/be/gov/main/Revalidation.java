@@ -25,7 +25,7 @@ public class Revalidation
 		long now = System.currentTimeMillis();
 		
 		DataSigner signer = new DataSigner(Config.KEY_STORE_NAME, 
-										   Config.KEYSTORE_LOC, 
+										   Config.KEY_STORE_PASSWD, 
 										   Config.SERVER_KEY_NAME, 
 										   Config.SERVER_KEY_PASSWD, 
 										   Config.SERVER_ISSUER);

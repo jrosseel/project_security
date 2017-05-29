@@ -208,6 +208,19 @@ public class IdentityCard extends Applet {
 		else{
 			byte[] buffer_in = apdu.getBuffer();
 			
+			/*
+			 * buffer_in contains
+			 * - CLA 		= 1 byte
+			 * - INS-code	= 1 byte
+			 * - P1			= 1 byte
+			 * - P2			= 1 byte
+			 * - LC = # bytes in data field = 1 byte
+			 * - data		= various number of bytes
+			 * - Le = max # bytes in data field = 1 byte
+			 * 
+			 *  => OFFSET_DATA = CLA + INS + P1 + P2 + LC
+			 */
+			
 			short length_hello = 5;
 			short offset = (short) (ISO7816.OFFSET_CDATA+length_hello); 
 			
@@ -267,7 +280,12 @@ public class IdentityCard extends Applet {
 			Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
 									
 			// gives an error => see how to create public key from byte array
+<<<<<<< HEAD
 			sig.init((Key) getPublicKeyGov(), Signature.MODE_VERIFY);
+=======
+			// 
+			/*sig.init((Key)getPublicKeyGov(), Signature.MODE_VERIFY);
+>>>>>>> origin/master
 			if(sig.verify(hash, (short)0, (short)hash.length, signature, (short)0, (short)signature.length))
 			{
 				result = 1;

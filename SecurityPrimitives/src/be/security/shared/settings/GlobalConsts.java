@@ -13,4 +13,8 @@ public class GlobalConsts
 	public final static String CRYPTO_ALGORITHM = "RSA"; 
 	public static final String HASH_ALGORITHM = "SHA-1";
 	
+	
+	// Simplification, should be a URI in a real-life case
+	public final static String GOVERNMENT_SERVER_ADDRESS = "127.0.0.1";
+	public final static int GOVERNMENT_PORT = 8081;
 }	

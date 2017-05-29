@@ -1,7 +1,6 @@
 package be.gov.main;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.InvalidKeyException;
@@ -16,7 +15,8 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.net.ServerSocketFactory;
 
-import be.security.shared.encryption.ByteSerializer;
+import be.security.shared.settings.GlobalConsts;
+import global.connection.sockets.SocketTransmitter;
 
 public class Main {
 
@@ -24,12 +24,13 @@ public class Main {
 			throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException 
 	{
 		ServerSocketFactory fac = ServerSocketFactory.getDefault();
-		ServerSocket serverSocket = fac.createServerSocket(8080);
+		ServerSocket serverSocket = fac.createServerSocket(GlobalConsts.GOVERNMENT_PORT);
 		while(true) {
 			Socket clientSocket = serverSocket.accept();
+			SocketTransmitter transmitter = new SocketTransmitter(clientSocket);
 			
-			byte[] response = ByteSerializer.EncodeObject(Revalidation.revalidate());
-			clientSocket.getOutputStream().write(response);
+			// Send back the current time
+			transmitter.Send(Revalidation.revalidate());
 		}
 	}
 	

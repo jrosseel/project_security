@@ -48,6 +48,7 @@ public class Cryptography
 	/**
 	 * Decrypt an in byte-array stored object, and transform it back into the object.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T extends Serializable> T decrypt(byte[] message, Key key) 
 			throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IOException, IllegalBlockSizeException, BadPaddingException, ClassNotFoundException 
 	{        

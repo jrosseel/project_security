@@ -1,14 +1,19 @@
 package be.msec.client;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
+import javax.net.SocketFactory;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 
-import be.gov.main.Revalidation;
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.client.connection.IConnection;
 import be.security.shared.data.SignedData;
+import be.security.shared.settings.GlobalConsts;
+import global.connection.sockets.SocketTransmitter;
 
 public class TimestampVerifier {
 
@@ -66,12 +71,14 @@ public class TimestampVerifier {
 	public void revalidate() 
 			throws Exception 
 	{
+		SocketTransmitter conn = _getConnection();
+		
 		// Contact government to get current time
-		SignedData<Long> sign = Revalidation.revalidate();
+		SignedData<Long> timeStamp = conn.ReceiveObject();
 
 		int length_time = 8;
 		int length_signature = 64;
-		byte[] time_signature = ByteBuffer.allocate(length_time+length_signature).put(sign.signature).putLong(sign.data).array();
+		byte[] time_signature = ByteBuffer.allocate(length_time+length_signature).put(timeStamp.signature).putLong(timeStamp.data).array();
 		//System.out.println(sig.length);
 		
 		CommandAPDU  command  = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_NEW_TIME_INS, 0x00, 0x00, time_signature,0x7f);
@@ -94,5 +101,13 @@ public class TimestampVerifier {
 		}
 		System.out.println(sb1);
 		
+	}
+	
+	private SocketTransmitter _getConnection() throws UnknownHostException, IOException 
+	{
+		SocketFactory ssf = SocketFactory.getDefault();
+		
+		Socket s = ssf.createSocket(GlobalConsts.GOVERNMENT_SERVER_ADDRESS , GlobalConsts.GOVERNMENT_PORT);
+		return new SocketTransmitter(s);
 	}
 }

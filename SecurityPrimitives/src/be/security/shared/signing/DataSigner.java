@@ -16,7 +16,6 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 import be.security.shared.data.SignedData;
-import be.security.shared.encryption.Cryptography;
 import be.security.shared.encryption.Hasher;
 import be.security.shared.keystore.KeyReader;
 

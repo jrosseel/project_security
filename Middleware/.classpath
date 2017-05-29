@@ -5,6 +5,5 @@
 	<classpathentry kind="lib" path="libs/apduio.jar"/>
 	<classpathentry kind="src" path="/SecurityPrimitives"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CardPrimitives"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/Timestamp Server"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

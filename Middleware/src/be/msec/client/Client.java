@@ -1,15 +1,9 @@
 package be.msec.client;
 
-import be.gov.main.Revalidation;
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
 import be.msec.client.connection.IConnection;
 import be.msec.client.connection.SimulatedConnection;
-import be.security.shared.data.SignedData;
-
-import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import javax.smartcardio.*;
 
@@ -72,14 +66,15 @@ public class Client {
 		}
 	}
 	
-	private static byte[] filterResponse(byte[] r, int l){
+	/* private static byte[] filterResponse(byte[] r, int l)
+	 * {
 		l += 5;
 		byte[] s = new byte[r.length - l];
 		for(int i = l; i<r.length; i++){
 			s[i - l] = r[i];
 		}
 		return s;
-	}
+	}*/
 	
 
 }

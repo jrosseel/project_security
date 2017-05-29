@@ -37,23 +37,20 @@ public class KeyReader
 		return sk;
 	}
 	
+	public PublicKey readPublic(String keyName) 
+		throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException 
+	{
+		PublicKey pk = (PublicKey) readCertificate(keyName).getPublicKey();
+
+		return pk;
+	}
+	
 	public Certificate readCertificate(String keyName) 
 		throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException 
 	{
 		KeyStore ks = _LoadKeyStore(keyStoreLoc, storePassword);
 		
 		return (Certificate) ks.getCertificate(keyName);
-	}
-	
-	public PublicKey readPublic(String keyName) 
-		throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException 
-	{
-		KeyStore ks = _LoadKeyStore(keyStoreLoc, storePassword);
-		
-		Certificate cert = (Certificate) ks.getCertificate(keyName);
-		PublicKey pk = (PublicKey)cert.getPublicKey();
-
-		return pk;
 	}
 	
 	/** Loads a KeyStore, given the location and password.

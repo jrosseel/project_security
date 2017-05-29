@@ -27,9 +27,9 @@ public class DataSigner
 				   _penPasswd,
 				   _issuer;
 
-	public DataSigner(String penKeyStore, String penKeyStoreLoc, String penKey, String penKeyPasswd, String issuer) 
+	public DataSigner(String penKeyStore, String penKeyStorePasswd, String penKey, String penKeyPasswd, String issuer) 
 	{
-		_penKeyStore = new KeyReader(penKeyStore, penKeyPasswd);
+		_penKeyStore = new KeyReader(penKeyStore, penKeyStorePasswd);
 		
 		_penKey = penKey;
 		_penPasswd = penKeyPasswd;

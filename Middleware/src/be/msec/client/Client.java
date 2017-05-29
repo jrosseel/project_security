@@ -1,9 +1,11 @@
 package be.msec.client;
 
+import be.gov.main.Revalidation;
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
 import be.msec.client.connection.IConnection;
 import be.msec.client.connection.SimulatedConnection;
+import be.security.shared.data.SignedData;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
@@ -71,20 +73,35 @@ public class Client {
 			
 			long current= System.currentTimeMillis();
 			// Allocate 13 bytes: 5 for 'Hello' and 8 for the time (long = 8 bytes)
-			byte[] message = ByteBuffer.allocate(13).put("Hello".getBytes()).putLong(current).array();
+			byte[] hello_current = ByteBuffer.allocate(13).put("Hello".getBytes()).putLong(current).array();
 
-			a = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_HELLO_TIME, 0x00, 0x00, message,0x7f);
+			a = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_HELLO_INS, 0x00, 0x00, hello_current,0x7f);
 			r = c.transmit(a);		
 			
 			if (r.getSW()!=0x9000) throw new Exception("Sending current time failed");
 			
 			System.out.println("Checking if revalidation request is needed");
-			short result = r.getData()[message.length+6];	
+			short result = r.getData()[hello_current.length+6];	
 			if(result==0x01)
 			{
 				System.out.println("New revalidation request needed");
 				// Contact government to get current time
+				SignedData<Long> sign = Revalidation.revalidate();
+
+				int length_time = 8;
+				int length_signature = 64;
+				byte[] time_signature = ByteBuffer.allocate(length_time+length_signature).put(sign.signature).putLong(sign.data).array();
+				//System.out.println(sig.length);
 				
+				a = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_NEW_TIME_INS, 0x00, 0x00, time_signature,0x7f);
+				r = c.transmit(a);		
+				printBytes(time_signature);
+				if (r.getSW()!=0x9000) throw new Exception("Updating current failed");
+				printBytes(r.getData());
+				//if(result2==0x01)
+				//{
+					//System.out.println("Time updated succesfully");
+				//}
 			}
 			else if(result==0x00)
 			{

@@ -1,5 +1,17 @@
 package be.msec.smartcard;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.security.InvalidKeyException;
+import java.security.KeyFactory;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
+import java.security.interfaces.RSAKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
 import javacard.framework.APDU;
@@ -7,7 +19,15 @@ import javacard.framework.Applet;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.OwnerPIN;
-import javacard.security.RSAPrivateKey;
+import javacard.security.CryptoException;
+import javacard.security.DESKey;
+import javacard.security.Key;
+import javacard.security.KeyBuilder;
+import javacard.security.KeyPair;
+import javacard.security.MessageDigest;
+import javacard.security.Signature;
+
+import java.security.PublicKey;
 
 public class IdentityCard extends Applet {
 	
@@ -29,7 +49,7 @@ public class IdentityCard extends Applet {
 		
 		sigma = new byte[]{ 0x00, 0x00, 0x00, 0x00, 0x05, 0x26, 0x5C, 0x00 }; // 1 day = 86400000 milliseconds 
 		card = new CardData();
-
+		
 		/*
 		 * This method registers the applet with the JCRE on the card.
 		 */
@@ -42,7 +62,7 @@ public class IdentityCard extends Applet {
 	public static void install(byte bArray[], short bOffset, byte bLength)
 			throws ISOException 
 	{
-		new IdentityCard();
+			new IdentityCard();		
 	}
 	
 	/*
@@ -72,7 +92,18 @@ public class IdentityCard extends Applet {
 		
 		//Check whether the indicated class of instructions is compatible with this applet.
 		if (buffer[ISO7816.OFFSET_CLA] != InstructionCodes.IDENTITY_CARD_CLA)ISOException.throwIt(ISO7816.SW_CLA_NOT_SUPPORTED);
-		_executeInstruction(apdu, buffer);
+		try {
+			_executeInstruction(apdu, buffer);
+		} catch (KeyStoreException e) {
+			// 
+		} catch (NoSuchAlgorithmException e) {
+		} catch (CertificateException e) {
+		} catch (IOException e) {
+		} catch (InvalidKeyException e) {
+		} catch (SignatureException e) {
+		} catch (CryptoException e) {
+		} catch (InvalidKeySpecException e) {
+		}
 	}
 
 	/**
@@ -115,8 +146,16 @@ public class IdentityCard extends Applet {
 
 	/**
 	 * Executes the current instruction
+	 * @throws IOException 
+	 * @throws CertificateException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws KeyStoreException 
+	 * @throws SignatureException 
+	 * @throws InvalidKeyException 
+	 * @throws InvalidKeySpecException 
+	 * @throws CryptoException 
 	 */
-	private void _executeInstruction(APDU apdu, byte[] buffer) 
+	private void _executeInstruction(APDU apdu, byte[] buffer) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, InvalidKeyException, SignatureException, CryptoException, InvalidKeySpecException 
 	{
 		//A switch statement is used to select a method depending on the instruction
 		switch(buffer[ISO7816.OFFSET_INS])
@@ -195,29 +234,49 @@ public class IdentityCard extends Applet {
 		}
 	}		
 	
-	private void _doNewTime(APDU apdu)
+	private void _doNewTime(APDU apdu) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, InvalidKeyException, SignatureException, CryptoException, InvalidKeySpecException
 	{
 		if ( ! pin.isValidated()) ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
 		else{
-			byte[] buffer_in = apdu.getBuffer();
+			byte[] buffer_in = apdu.getBuffer();			
 			
-			short length_hello = 5;
-			short offset = (short) (ISO7816.OFFSET_CDATA+length_hello); 
+			short length_time = (short) 8;
+			short length_signature = (short) 64;
+			short offset_time = (short) (ISO7816.OFFSET_CDATA); 
+			short offset_signature = (short) (offset_time+length_time);
+			byte result=2;
 			
-			byte result=0;
+			byte[] time = new byte[length_time];
+			byte[] signature = new byte[length_signature];
 			
-			for(short i=0; i<8;i++)
+			// fill bytearray time
+			for(short i=0; i<length_time;i++)
 			{
-				if(!(card.getLastValidationTime()[i] == (buffer_in[offset+i] - sigma[i])))
-				{
-					if(card.getLastValidationTime()[i]<(buffer_in[offset+i]-sigma[i]))
-					{
-						result=1;
-					}
-					break;
-				}
+				time[i] = buffer_in[offset_time+i];
 			}
-			
+			// fill bytearray signature
+			for(short i=0; i<length_time;i++)
+			{
+				signature[i] = buffer_in[offset_signature+i];
+			}
+			// hash time
+			MessageDigest md = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
+			md.reset();
+			byte[] hash = new byte[64];
+			md.doFinal(time, (short) 0, (short) time.length, hash, (short) 0);
+			Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
+									
+			// gives an error => see how to create public key from byte array
+			/*sig.init((Key)getPublicKeyGov(), Signature.MODE_VERIFY);
+			if(sig.verify(hash, (short)0, (short)hash.length, signature, (short)0, (short)signature.length))
+			{
+				result = 1;
+				// Only to test. If it works => update validation time
+			}
+			{
+				result = 0;
+			}*/
+
 			byte[] buffer_out = new byte[]{result};
 			
 			apdu.setOutgoing();
@@ -226,42 +285,13 @@ public class IdentityCard extends Applet {
 			
 		}
 	}
-
-		
-		
-	/*	
-		
-		
-		
-		byte[] in = apdu.getBuffer();
-
-		byte numBytes = in[ISO7816.OFFSET_LC];
-		byte byteRead = (byte)(apdu.setIncomingAndReceive());
-		
-		// it is an error if the number of data bytes read does not match the number in Lc byte
-		if ( ( numBytes != 1 ) || (byteRead != 1) )
-		 ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-		
-		// Hello
-		byte[] hello = new byte[]{ 0x48, 0x65, 0x6c, 0x6c, 0x6f };
-		// Justify offset to get the current time
-		for(short i = 0; i < hello.length; i++){
-			if(in[ISO7816.OFFSET_CDATA + i] != hello[i]) ISOException.throwIt(ISO7816.SW_WRONG_DATA);
-		}
-		
-		// put currentTime in bytearray
-		byte[] currentTime = new byte[Long.BYTES];
-		for(short i=0; i<Long.BYTES; i++)
-		{
-			currentTime[i] = in[ISO7816.OFFSET_CDATA + i];
-		}
-		
-		byte[] buffer = currentTime;
-		apdu.setOutgoing();
-		apdu.setOutgoingLength((short)buffer.length);
-		apdu.sendBytesLong(buffer,(short)0,(short)buffer.length);
-
-    }*/
+	
+	public PublicKey getPublicKeyGov() throws NoSuchAlgorithmException, InvalidKeySpecException {
+		X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(card.getPublicKeyGovernment());
+		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+		PublicKey gov = keyFactory.generatePublic(pubKeySpec);
+		return gov;
+	}
 		
 	private void _getCardData(APDU apdu, byte[] item)
 	{

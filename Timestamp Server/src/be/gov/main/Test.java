@@ -34,15 +34,17 @@ public class Test {
 		//byte[] time_test = ByteBuffer.allocate(Long.BYTES).putLong(test).array();
 	    /*MessageDigest md = MessageDigest.getInstance("SHA-1");
 	    byte[] hash = md.digest(time_b);
-	    byte[] hash2 = md.digest(time_test);*
+	    byte[] hash2 = md.digest(time_test);*/
 	    KeyReader k = new KeyReader("government","");
 		PrivateKey gov = k.readPrivate("gov_timestamp_server", "");
-		PublicKey gov_pub = k.readPublic("gov_timestamp_server");*/
+		PublicKey gov_pub = k.readPublic("gov_timestamp_server");
 	    
+		
+		
 		SignedData<Long> sign = Revalidation.revalidate();
 				
 		SignatureVerifier s = new SignatureVerifier("government", "", "gov_timestamp_server"); 
-				
+
 		if(s.verify(sign))
 		{
 			System.out.println("OK");
@@ -52,12 +54,15 @@ public class Test {
 			System.out.println("Nok");
 		}
 		
+		printBytes(gov_pub.getEncoded());
+		
+		
 	}
 	
 	private static void printBytes(byte[] data) {
 		String sb1 = "";
 		for (byte b: data) {
-			sb1 +="0x" +  String.format("%02x", b) + " ";
+			sb1 +="(byte)0x" +  String.format("%02x", b) + ", ";
 		}
 		System.out.println(sb1);
 		

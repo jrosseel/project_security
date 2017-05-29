@@ -35,7 +35,6 @@ public class SignatureVerifier
 			throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException 
 	{
 		byte[] hash = Hasher.hashObject(signedData.data);
-		
 		return verify(
 				hash, 
 				signedData.signature);

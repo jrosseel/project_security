@@ -1,16 +1,7 @@
 package be.msec.smartcard;
 
-import java.io.IOException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-
-import be.security.shared.keystore.KeyReader;
-import javacard.security.PublicKey;
-
-public class CardData {
-
-	
+public class CardData 
+{
 	private byte[] lastValidationTime  = {0x00, 0x00, 0x01, 0x5c, 0x45, (byte) 0x86, 0x3f, (byte) 0x88}; // 26/05/2017 18:10:45
 	private byte[] nymEgov1; // unique identifier user by first service provider eGov
 	private byte[] nymEgov2;

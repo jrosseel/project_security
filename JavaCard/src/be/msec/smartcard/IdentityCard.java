@@ -267,15 +267,16 @@ public class IdentityCard extends Applet {
 			Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
 									
 			// gives an error => see how to create public key from byte array
-			/*sig.init((Key)getPublicKeyGov(), Signature.MODE_VERIFY);
+			sig.init((Key) getPublicKeyGov(), Signature.MODE_VERIFY);
 			if(sig.verify(hash, (short)0, (short)hash.length, signature, (short)0, (short)signature.length))
 			{
 				result = 1;
 				// Only to test. If it works => update validation time
 			}
+			else
 			{
 				result = 0;
-			}*/
+			}
 
 			byte[] buffer_out = new byte[]{result};
 			

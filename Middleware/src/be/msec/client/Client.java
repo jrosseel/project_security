@@ -44,14 +44,16 @@ public class Client {
 			System.out.println(r);
 			if (r.getSW()==SignalCodes.SW_VERIFICATION_FAILED) throw new Exception("PIN INVALID");
 			else if(r.getSW()!=0x9000) throw new Exception("Exception on the card: " + r.getSW());
-			System.out.println("PIN Verified");
-		
+			System.out.println("PIN Verified");		
 		
 			TimestampVerifier verifier = new TimestampVerifier(c);
+							
+			if(verifier.isValid())
 			{
 				System.out.println("Last access time is deprecated. Contacting government to revalidate.");
-				verifier.revalidate();
-			}
+				verifier.revalidate();	
+			}			
+			
 			// Step 1: SC -> M 
 			// Check if revalidation request is needed
 			//System.out.println(filterResponse(r.getData(), message.length)[0]);

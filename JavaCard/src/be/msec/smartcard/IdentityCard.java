@@ -21,10 +21,12 @@ import javacard.framework.ISOException;
 import javacard.framework.OwnerPIN;
 import javacard.security.CryptoException;
 import javacard.security.DESKey;
+import javacard.security.ECPublicKey;
 import javacard.security.Key;
 import javacard.security.KeyBuilder;
 import javacard.security.KeyPair;
 import javacard.security.MessageDigest;
+import javacard.security.RSAPublicKey;
 import javacard.security.Signature;
 
 import java.security.PublicKey;
@@ -33,7 +35,9 @@ public class IdentityCard extends Applet {
 	
 	private CardData card;
     private final byte[] sigma;
-	private OwnerPIN pin;
+    private final byte[] mod_pub_gov = new byte[]{(byte)0xc7, (byte)0x0e, (byte)0x54, (byte)0x1a, (byte)0x2e, (byte)0x2e, (byte)0x12, (byte)0xa9, (byte)0xbb, (byte)0x04, (byte)0x2b, (byte)0x36, (byte)0x05, (byte)0x5b, (byte)0xbf, (byte)0x2b, (byte)0xc9, (byte)0x5d, (byte)0xf0, (byte)0x78, (byte)0x2c, (byte)0xef, (byte)0x9a, (byte)0x55, (byte)0x48, (byte)0x3f, (byte)0x3c, (byte)0x09, (byte)0x06, (byte)0x3f, (byte)0xed, (byte)0xed, (byte)0x23, (byte)0x68, (byte)0xcc, (byte)0x92, (byte)0xdc, (byte)0x8f, (byte)0x14, (byte)0xbb, (byte)0x13, (byte)0x32, (byte)0xf4, (byte)0x4e, (byte)0x7f, (byte)0x8b, (byte)0x3b, (byte)0x09, (byte)0x7f, (byte)0x35, (byte)0xca, (byte)0x2c, (byte)0x5c, (byte)0x1a, (byte)0x49, (byte)0x40, (byte)0xef, (byte)0xa4, (byte)0xaa, (byte)0xe6, (byte)0x78, (byte)0x52, (byte)0xb8, (byte)0xc3};
+    private final byte[] exp_pub_gov = new byte[]{(byte)0x01, (byte)0x00, (byte)0x01};
+    private OwnerPIN pin;
 	
 	//input above instance variables into info below
 	private byte[] info;
@@ -48,6 +52,8 @@ public class IdentityCard extends Applet {
 		pin.update(new byte[]{0x01,0x02,0x03,0x04},(short) 0, InstructionCodes.PIN_SIZE); 
 		
 		sigma = new byte[]{ 0x00, 0x00, 0x00, 0x00, 0x05, 0x26, 0x5C, 0x00 }; // 1 day = 86400000 milliseconds 
+		
+		
 		card = new CardData();
 		
 		/*
@@ -62,7 +68,7 @@ public class IdentityCard extends Applet {
 	public static void install(byte bArray[], short bOffset, byte bLength)
 			throws ISOException 
 	{
-			new IdentityCard();		
+			new IdentityCard();				
 	}
 	
 	/*
@@ -89,6 +95,11 @@ public class IdentityCard extends Applet {
 		if(this.selectingApplet())
 			return;
 		
+		// create public key government
+		RSAPublicKey pub_gov = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+		pub_gov.setExponent(exp_pub_gov, (short)0, (short)exp_pub_gov.length);
+		pub_gov.setModulus(mod_pub_gov, (short)0, (short)mod_pub_gov.length);	
+		card.setPublicKeyGovernment(pub_gov);
 		
 		//Check whether the indicated class of instructions is compatible with this applet.
 		if (buffer[ISO7816.OFFSET_CLA] != InstructionCodes.IDENTITY_CARD_CLA)ISOException.throwIt(ISO7816.SW_CLA_NOT_SUPPORTED);
@@ -255,41 +266,38 @@ public class IdentityCard extends Applet {
 			
 			short length_time = (short) 8;
 			short length_signature = (short) 64;
-			short offset_time = (short) (ISO7816.OFFSET_CDATA); 
-			short offset_signature = (short) (offset_time+length_time);
+			short offset_signature = (short) (ISO7816.OFFSET_CDATA); 
+			short offset_time = (short) (offset_signature+length_signature);
 			byte result=2;
 			
 			byte[] time = new byte[length_time];
 			byte[] signature = new byte[length_signature];
+						
+			// fill bytearray signature
+			for(short i=0; i<length_signature;i++)
+			{
+				signature[i] = buffer_in[offset_signature+i];
+			}
 			
 			// fill bytearray time
 			for(short i=0; i<length_time;i++)
 			{
 				time[i] = buffer_in[offset_time+i];
 			}
-			// fill bytearray signature
-			for(short i=0; i<length_time;i++)
-			{
-				signature[i] = buffer_in[offset_signature+i];
-			}
+			
 			// hash time
 			MessageDigest md = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
 			md.reset();
-			byte[] hash = new byte[64];
+			byte[] hash = new byte[20];
 			md.doFinal(time, (short) 0, (short) time.length, hash, (short) 0);
+			
 			Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
-									
-			// gives an error => see how to create public key from byte array
-
-			sig.init((Key) getPublicKeyGov(), Signature.MODE_VERIFY);
-
-			// 
-			/*sig.init((Key)getPublicKeyGov(), Signature.MODE_VERIFY);
-
+			sig.init(card.getPublicKeyGovernment(), Signature.MODE_VERIFY);
+		
 			if(sig.verify(hash, (short)0, (short)hash.length, signature, (short)0, (short)signature.length))
 			{
 				result = 1;
-				// Only to test. If it works => update validation time
+				card.setLastValidationTime(time);
 			}
 			else
 			{
@@ -301,17 +309,10 @@ public class IdentityCard extends Applet {
 			apdu.setOutgoing();
 			apdu.setOutgoingLength((short)buffer_out.length);
 			apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
-			*/
+			
 		}
-	}
-	
-	public PublicKey getPublicKeyGov() throws NoSuchAlgorithmException, InvalidKeySpecException {
-		X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(card.getPublicKeyGovernment());
-		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-		PublicKey gov = keyFactory.generatePublic(pubKeySpec);
-		return gov;
-	}
-		
+	}	
+
 	private void _getCardData(APDU apdu, byte[] item)
 	{
 		if(!pin.isValidated())ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
@@ -321,4 +322,6 @@ public class IdentityCard extends Applet {
 	        apdu.sendBytesLong(item,(short)0,(short)item.length);
 		}
     }
+	
+	
 }

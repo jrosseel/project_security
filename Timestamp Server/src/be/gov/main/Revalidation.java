@@ -22,7 +22,7 @@ public class Revalidation
 						throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, IOException, SignatureException {
 		
 		System.out.println("Entered gov server");
-		long now = System.currentTimeMillis();
+		Long now = System.currentTimeMillis();
 		
 		DataSigner signer = new DataSigner(Config.KEY_STORE_NAME, 
 										   Config.KEY_STORE_PASSWD, 

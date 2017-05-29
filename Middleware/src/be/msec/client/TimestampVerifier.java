@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.PrivateKey;
+import java.security.Signature;
 
 import javax.net.SocketFactory;
 import javax.smartcardio.CommandAPDU;
@@ -12,6 +15,8 @@ import javax.smartcardio.ResponseAPDU;
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.client.connection.IConnection;
 import be.security.shared.data.SignedData;
+import be.security.shared.encryption.Hasher;
+import be.security.shared.keystore.KeyReader;
 import be.security.shared.settings.GlobalConsts;
 import global.connection.sockets.SocketTransmitter;
 
@@ -71,27 +76,52 @@ public class TimestampVerifier {
 	public void revalidate() 
 			throws Exception 
 	{
-		SocketTransmitter conn = _getConnection();
+		/*SocketTransmitter conn = _getConnection();
 		
 		// Contact government to get current time
 		SignedData<Long> timeStamp = conn.ReceiveObject();
 
+		*/
+
+		
+		////////////////////// TEST TEST TEST TEST /////////////////////////
+		// Hasher.hashObject doesn't produce the right hash, hashBytes does. 
+		// Putted everything here to just test if verification works
+		KeyReader k = new KeyReader("government", "123456");
+		PrivateKey sk = k.readPrivate("gov_timestamp_server", "");
+		
+		long now = System.currentTimeMillis();
+		MessageDigest md = MessageDigest.getInstance(GlobalConsts.HASH_ALGORITHM);
+		
+		byte[] hash = md.digest(ByteBuffer.allocate(Long.BYTES).putLong(now).array());
+		Signature signer;
+	    signer = Signature.getInstance("SHA1withRSA");
+	    signer.initSign(sk);
+	    signer.update(hash);
+	    byte[] signature = signer.sign();
+		
 		int length_time = 8;
 		int length_signature = 64;
-		byte[] time_signature = ByteBuffer.allocate(length_time+length_signature).put(timeStamp.signature).putLong(timeStamp.data).array();
-		//System.out.println(sig.length);
+		byte[] signature_time = ByteBuffer.allocate(length_time+length_signature).put(signature).putLong(now).array();
 		
-		CommandAPDU  command  = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_NEW_TIME_INS, 0x00, 0x00, time_signature,0x7f);
+		
+		CommandAPDU  command  = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_NEW_TIME_INS, 0x00, 0x00, signature_time ,0x7f);
 		ResponseAPDU response = _cardConnection.transmit(command);		
-		
-		printBytes(time_signature);
-		
+				
 		if (response.getSW()!=0x9000) throw new Exception("Updating current failed");
-		printBytes(response.getData());
-		//if(result2==0x01)
-		//{
-			//System.out.println("Time updated succesfully");
-		//}
+		
+		////////////////////////////////////
+
+		short result = response.getData()[signature_time.length+6];	
+		if(result==0x01)
+		{
+			System.out.println("Signature verified. Time updated!");
+		}
+		else
+		{
+			System.out.println("Signature not verified. Time not updated");
+		}
+				
 	}
 	
 	private static void printBytes(byte[] data) {

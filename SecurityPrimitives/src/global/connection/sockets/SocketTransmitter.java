@@ -1,10 +1,10 @@
 package global.connection.sockets;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
-
-import be.security.shared.encryption.ByteSerializer;
 
 /**
  * Class that allows data tranmission over sockets. */
@@ -25,10 +25,9 @@ public class SocketTransmitter
 	public void Send(Serializable obj) 
 			throws IOException 
 	{
-		byte[] toSend = ByteSerializer.EncodeObject(obj);
+		ObjectOutputStream output = new ObjectOutputStream(_socket.getOutputStream());
 		
-		_socket.getOutputStream().write(toSend.length);
-		_socket.getOutputStream().write(toSend);
+		output.writeObject(obj);
 	}
 	
 	/**
@@ -38,19 +37,10 @@ public class SocketTransmitter
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends Serializable> T ReceiveObject()
-		throws IOException, Exception
+		throws IOException, ClassNotFoundException
 	{
-		int objSize = _socket.getInputStream().read();
-		if(objSize <= 0)
-			throw new Exception("Invalid data sent over the socket.");
-			
-		byte[] obj = new byte[objSize];
+		ObjectInputStream input = new ObjectInputStream(_socket.getInputStream());
 		
-		for(int i = 0; i < objSize; i++)
-		{
-			obj[i] = (byte) _socket.getInputStream().read();
-		}
-		
-		return (T) ByteSerializer.DecodeObject(obj);
+		return (T) input.readObject();
 	}
 }

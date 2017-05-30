@@ -8,6 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 
 /**
  * Class that converts serializable objects into bytestreams,
@@ -18,6 +19,12 @@ import java.io.Serializable;
  */
 public class ByteSerializer
 {
+	public static byte[] EncodeInt(int i) {
+		ByteBuffer b = ByteBuffer.allocate(4);
+		b.putInt(i);
+
+		return b.array();
+	}
 	
 	public static byte[] EncodeObject(Serializable obj) 
 		throws IOException 

@@ -47,7 +47,7 @@ public class X509CertificateSimplifier
 										   "global_masterkey", "123456", 
 										   "CN=Global Masterkey CA,OU=Master Key Holding Vault,O=Master Key Holding Ltd.,L=Luxembourg,ST=Brussels,C=BE,E=contact@jenterosseel.com");
 		
-		return signer.sign(cert);
+		return signer.sign(cert, cert.toBytes());
 	}
 	
 	private Certificate _getCertificate() 

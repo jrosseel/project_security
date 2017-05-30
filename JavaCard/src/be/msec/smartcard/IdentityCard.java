@@ -1,39 +1,28 @@
 package be.msec.smartcard;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
-import java.security.KeyFactory;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
-import java.security.interfaces.RSAKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
 import javacard.framework.APDU;
 import javacard.framework.Applet;
-import javacard.framework.CardException;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.OwnerPIN;
+import javacard.framework.Util;
 import javacard.security.AESKey;
 import javacard.security.CryptoException;
-import javacard.security.DESKey;
-import javacard.security.ECPublicKey;
-import javacard.security.Key;
 import javacard.security.KeyBuilder;
-import javacard.security.KeyPair;
 import javacard.security.MessageDigest;
 import javacard.security.RSAPrivateKey;
 import javacard.security.RSAPublicKey;
-import javacard.security.RandomData;
 import javacard.security.Signature;
-
-import java.security.PublicKey;
 
 public class IdentityCard extends Applet {
 	
@@ -231,6 +220,9 @@ public class IdentityCard extends Applet {
 			case InstructionCodes.DO_NEW_TIME_INS:
 				_doNewTime(apdu);
 				break;
+			case InstructionCodes.DO_AUTH_SP_STEP:
+				_doAuthSPStep(apdu);
+				break;
 			case InstructionCodes.DO_AUTH_SP:
 				_doAuthSP(apdu);
 				break;
@@ -347,95 +339,40 @@ public class IdentityCard extends Applet {
 		}
 	}	
 	
+	private int authStep = 0;
+	private byte[] authBuffer = new byte[512];
+	private byte[] storage = new byte[512];
+	private void _doAuthSPStep(APDU apdu)
+	{
+		if ( ! pin.isValidated()) 
+			ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
+		
+		if (authStep == 0) {
+            Util.arrayFillNonAtomic(authBuffer, (short) 0, (short) authBuffer.length, (byte) 0);
+        }
+        byte[] buffer = apdu.getBuffer();
+        short bytesLeft = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
+        short START = 0;
+        Util.arrayCopy(buffer, START, storage, START, (short)8);
+        short readCount = apdu.setIncomingAndReceive();
+        short i = (short) (255*authStep);
+        while ( bytesLeft > 0){
+            Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, authBuffer, i, readCount);
+            bytesLeft -= readCount;
+            i+=readCount;
+            readCount = apdu.receiveBytes(ISO7816.OFFSET_CDATA);
+        }
+        
+        
+        authStep += 1;
+	}	
+	
 	private void _doAuthSP(APDU apdu)
 	{
-		if ( ! pin.isValidated()) ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
-		else{
-			byte[] buffer_in = apdu.getBuffer();
-			short bytesLeft = (short) (buffer_in[ISO7816.OFFSET_LC] & 0x00FF);
-			if (bytesLeft < (short)55) ISOException.throwIt( ISO7816.SW_WRONG_LENGTH );
-			short readCount = apdu.setIncomingAndReceive();
-			while ( bytesLeft > 0){
-
-			     // process bytes in buffer[5] to buffer[readCount+4];
-
-			     bytesLeft -= readCount;
-			     readCount = apdu.receiveBytes ( ISO7816.OFFSET_CDATA );
-			}
-			//byte[] buffer_in = apdu.getBuffer();			
-			
-			/*short offset = (short) (ISO7816.OFFSET_CDATA); 
-			short length_signature = (short) buffer_in[offset];
-			short length_cert = (short) buffer_in[offset+1];
-			short offset_signature = (short) (offset + 2);
-			short offset_cert = (short) (offset_signature + length_signature);
-			
-			byte [] signature = new byte[length_signature];
-			byte [] cert = new byte[length_cert];
-			for(short i=0; i<length_signature; i++)
-			{
-				signature[i]=buffer_in[offset_signature+i];
-			}
-			for(short i=0; i<length_cert; i++)
-			{
-				cert[i]=buffer_in[offset_cert+i];
-			}*/
-			
-			// possibly do multiple loops to get all data from certificate
-			
-			// store signature somewhere
-			
-			// hash the certificate?
-			/*MessageDigest md = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
-			md.reset();
-			byte[] hash = new byte[20];
-			//md.doFinal(time, (short) 0, (short) time.length, hash, (short) 0);
-			
-			// verify signature. Use public key ca
-			
-			Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
-			sig.init(card.getPublicKeyCA(), Signature.MODE_VERIFY);
-			byte result = 2;
-			//if(sig.verify(hash, (short)0, (short)hash.length, signature, (short)0, (short)signature.length))
-			//{
-				result = 1;
-				// check if end time certificate < lastValidationTime
-				
-				// if so, abort
-				
-				// else: Ks = new symmetric key with secure random
-				RandomData rnd = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM); 
-				byte[] secure_rand = new byte[20];
-				rnd.generateData(secure_rand, (short) 0, (short)secure_rand.length);
-				AESKey ks;
-				ks = (AESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_128, false);
-				ks.setKey(secure_rand, (short)0);
-				
-				// get public key of SP out of certificate
-				// use this key to asymmetric encrypt (Ekey) symmetric key ks
-				
-				// generate challenge = secure random number
-				byte[] challenge = new byte[20];
-				rnd.generateData(challenge, (short)0, (short)challenge.length);
-				
-				// symmetric encryption Emsg = [c, SubjectOfSP] with Ks
-				
-				// Send Emsg and Ekey to Middleware and later on to the SP
-				
-				
-			//}
-			//else
-			//{
-			//	result = 0;
-			//}
-			*/
-			byte[] buffer_out = new byte[]{2};
-			
-			apdu.setOutgoing();
-			apdu.setOutgoingLength((short)buffer_out.length);
-			apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
-			
-		}
+		if ( ! pin.isValidated()) 
+			ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
+		
+		
 	}	
 	
 	private void _doAuthCard(APDU apdu)

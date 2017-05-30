@@ -4,35 +4,21 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.net.SocketFactory;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 
 import be.msec.cardprimitives.smartcard.InstructionCodes;
-import be.msec.cardprimitives.smartcard.SignalCodes;
 import be.msec.client.connection.IConnection;
 import be.security.shared.data.Certificate;
 import be.security.shared.data.SignedData;
-import be.security.shared.encryption.Hasher;
 import be.security.shared.settings.GlobalConsts;
-import be.service.certify.X509CertificateSimplifier;
 import global.connection.sockets.SocketTransmitter;
 import global.connection.sockets.routing.ServiceProviders;
 
-public class AuthenticationServiceProvider {
-	
+public class AuthenticationServiceProvider
+{	
 	IConnection _cardConnection;
 	
 	public AuthenticationServiceProvider(IConnection cardConnection) {
@@ -53,10 +39,32 @@ public class AuthenticationServiceProvider {
 		printBytes(cert_sp);
 		int length_cert = cert_sp.length;
 		System.out.println(length_sig + " " + length_cert);
-		byte [] signature_cert = ByteBuffer.allocate(256).put(signature).array();		
-		CommandAPDU command   = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_AUTH_SP, 0x00, 0x00, signature_cert,0x7f);
-		ResponseAPDU response = _cardConnection.transmit(command);	
+		byte[] signature_cert = ByteBuffer.allocate(length_sig+length_cert).put(signature).put(cert_sp).array();
+		if(signature.length > MAX_LEN) 
+			_sendInPieces(signature_cert);
 		
+		
+	}
+	
+	private static final int MAX_LEN = 255;
+	
+	private void _sendInPieces(byte[] signature_cert) throws Exception 
+	{
+		byte[] buffer = new byte[MAX_LEN];
+		for(int i =0; i< Math.ceil((double) signature_cert.length / MAX_LEN); i++)
+		{
+			System.arraycopy(signature_cert, MAX_LEN*i, buffer, 0, Math.min(MAX_LEN,  signature_cert.length - (MAX_LEN * i)));
+			
+			CommandAPDU command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_AUTH_SP_STEP, 0x00, 0x00, buffer);
+			ResponseAPDU response = _cardConnection.transmit(command);
+			
+			if (response.getSW()!=0x9000)
+				throw new Exception("Failed to send piece of signature.");
+		}
+		CommandAPDU command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_AUTH_SP, 0x00, 0x00, new byte[1]);
+		ResponseAPDU response = _cardConnection.transmit(command);
+		
+
 		if (response.getSW()!=0x9000) throw new Exception("Verify SPcert failed");
 		
 		short result = response.getData()[signature_cert.length+6];	
@@ -65,13 +73,10 @@ public class AuthenticationServiceProvider {
 			System.out.println("Signature verified. Time updated!");
 		}
 		else
-		{
 			System.out.println("Signature not verified. Time not updated");
-		}
+	
 	}
-	
-	
-	
+
 	private SocketTransmitter _getConnection() throws UnknownHostException, IOException 
 	{
 		SocketFactory ssf = SocketFactory.getDefault();
@@ -80,10 +85,6 @@ public class AuthenticationServiceProvider {
 		return new SocketTransmitter(s);
 	}
 	
-	public static void main(String[]args) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException, IOException{
-		
-		
-	}
 	
 	private static void printBytes(byte[] data) {
 		String sb1 = "";

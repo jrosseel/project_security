@@ -14,6 +14,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import be.security.shared.data.CardAuthenticationMedium;
 import be.security.shared.data.Certificate;
 import be.security.shared.data.KeyNegotiation;
 import be.security.shared.data.KeyNegotiationChallenge;
@@ -26,6 +27,7 @@ import be.security.shared.settings.GlobalConsts;
 import be.service.certify.X509CertificateSimplifier;
 import be.service.config.Config;
 import be.service.config.ServerException;
+import be.service.logic.CardAuthenticator;
 import global.connection.sockets.SocketTransmitter;
 
 public class ServiceProvider {
@@ -59,6 +61,11 @@ public class ServiceProvider {
 			KeyNegotiationResponse keyNegResp = _handleKeynegotiation(keyNeg);
 			_connection.Send(keyNegResp);
 			
+			CardAuthenticator authenticator = new CardAuthenticator(_symmetricKey);
+			_connection.Send(authenticator.getAuthenticationRequest());
+			CardAuthenticationMedium cardAuthResponse = _connection.ReceiveObject();
+			
+			authenticator.verifyChallenge(cardAuthResponse.data);
 		} 
 		catch (ServerException e) 
 		{	
@@ -102,4 +109,5 @@ public class ServiceProvider {
 						.getSignedCertificate();
 	}
 
+	
 }

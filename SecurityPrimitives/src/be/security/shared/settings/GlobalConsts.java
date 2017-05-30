@@ -10,7 +10,9 @@ public class GlobalConsts
 	private final static String _LOCAL_FOLDER = "C:\\Users\\JRosseel\\Google Drive\\School\\Master\\Semester 4\\Project Security";
 	public final static String KEY_STORE_FOLDER = _LOCAL_FOLDER + "\\workspace\\KeysAndCertificates\\";
 	
-	public final static String CRYPTO_ALGORITHM = "RSA"; 
+	public final static String ASYMM_CRYPTO_ALGORITHM = "RSA"; 
+	public final static String SYMM_CRYPTO_ALGORITHM  = "AES/CBC/PKCS5PADDING"; 
+	
 	public static final String HASH_ALGORITHM = "SHA-1";
 
 	public static final String SIGNATURE_ALGORITHM = "SHA1withRSA";

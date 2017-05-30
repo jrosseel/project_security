@@ -43,4 +43,10 @@ public class SocketTransmitter
 		
 		return (T) input.readObject();
 	}
+	
+	public void close() 
+			throws IOException 
+	{
+		_socket.close();
+	}
 }

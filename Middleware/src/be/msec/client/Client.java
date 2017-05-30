@@ -55,8 +55,8 @@ public class Client {
 			}
 			
 			AuthenticationServiceProvider asp = new AuthenticationServiceProvider(c);
-			
-			
+			asp.authenticate();
+						
 		} catch (Exception e) {
 			throw e;
 		}

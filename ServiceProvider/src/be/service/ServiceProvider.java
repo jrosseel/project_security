@@ -13,8 +13,13 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 import be.security.shared.data.Certificate;
+import be.security.shared.data.KeyNegotiation;
+import be.security.shared.data.KeyNegotiationChallenge;
 import be.security.shared.data.SignedData;
+import be.security.shared.encryption.Cryptography;
+import be.security.shared.keystore.KeyReader;
 import be.service.certify.X509CertificateSimplifier;
+import be.service.config.Config;
 import global.connection.sockets.SocketTransmitter;
 
 public class ServiceProvider {
@@ -22,20 +27,30 @@ public class ServiceProvider {
 	private SocketTransmitter _connection;
 	private String 			  _name;
 	private int 			  _domainId;
-
+	private KeyReader 		  _keyReader;
+	
+	private byte[] _symmetricKey;
+	
 	public ServiceProvider(SocketTransmitter connection, String name, int domainId) {
 		_connection = connection;
 		_name = name;
 		_domainId = domainId;
+		_keyReader = new KeyReader(name, Config.KEYSTORE_PASSWD);
 	}
 
 	public void run()
-					throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException, IOException 
+					throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException, IOException, ClassNotFoundException 
 	{	
 		// First authenticate yourself to the caller
 		SignedData<Certificate> myCert = _getIdentification();
 		_connection.Send(myCert);
 		
+		KeyNegotiation keyNeg = _connection.ReceiveObject();
+
+		_symmetricKey = Cryptography.decrypt(keyNeg.encryptedKeyNegotiationChallenge, 
+							 				 _keyReader.readPrivate(Config.SP_KEY_NAME,
+							 						  			    Config.SP_KEY_PASSWD));
+		KeyNegotiationChallenge chall = 
 		// TODO: Further steps
 	}
 	

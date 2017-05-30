@@ -1,6 +1,7 @@
 package be.msec.smartcard;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -361,9 +362,7 @@ public class IdentityCard extends Applet {
             bytesLeft -= readCount;
             i+=readCount;
             readCount = apdu.receiveBytes(ISO7816.OFFSET_CDATA);
-        }
-        
-        
+        }      
         authStep += 1;
 	}	
 	
@@ -371,7 +370,56 @@ public class IdentityCard extends Applet {
 	{
 		if ( ! pin.isValidated()) 
 			ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
+		authStep = 0;
 		
+		// Dirty fix to get length of signature 
+		ByteBuffer b_sig_len = ByteBuffer.wrap(new byte[]{authBuffer[0], authBuffer[1]});
+		short sig_len = b_sig_len.getShort();
+		
+		// Same for length certificate
+		ByteBuffer b_cert_len = ByteBuffer.wrap(new byte[]{authBuffer[2], authBuffer[3]});
+		short cert_len = b_cert_len.getShort();
+		
+		// offsets
+		short off_sig = 4; // signature start at fifth pos of authBuffer
+		short off_cert = (short)(off_sig + sig_len);
+			
+		// fill arrays with signature and certificate
+		byte[] signature = new byte[sig_len];
+		byte[] cert = new byte[cert_len];
+		for(short i=0; i<sig_len; i++)
+		{
+			signature[i] = authBuffer[off_sig+i];
+		}
+		for(short i=0; i<cert_len; i++)
+		{
+			cert[i] = authBuffer[off_cert+i];
+		}
+				
+		MessageDigest md = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
+		md.reset();
+		byte[] hash = new byte[20];
+		md.doFinal(cert, (short) 0, (short) cert.length, hash, (short) 0);
+		
+		Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
+		sig.init(card.getPublicKeyCA(), Signature.MODE_VERIFY);
+	
+		byte result = 2;
+		if(sig.verify(hash, (short)0, (short)hash.length, signature, (short)0, (short)signature.length))
+		{
+			// do other steps
+			
+		}
+		else
+		{
+			ISOException.throwIt(SignalCodes.SW_VERIFICATION_CERT_FAILED);
+		}
+		
+		
+		byte[] buffer_out = new byte[]{result};
+		apdu.setOutgoing();
+		apdu.setOutgoingLength((short)buffer_out.length);
+		apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
 		
 	}	
 	
@@ -388,14 +436,12 @@ public class IdentityCard extends Applet {
 			// => First hash decrypt
 			
 			// New encrypt: Emsg = Symmetric encryption (CertCO, signature) met Ks
-			
-			
+						
 			MessageDigest md = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
 			md.reset();
 			byte[] hash = new byte[20];
 			//md.doFinal(time, (short) 0, (short) time.length, hash, (short) 0);
-			
-			
+						
 			byte[] buffer_out = new byte[]{};
 			
 			apdu.setOutgoing();

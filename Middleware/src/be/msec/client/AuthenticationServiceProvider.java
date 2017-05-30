@@ -10,6 +10,7 @@ import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 
 import be.msec.cardprimitives.smartcard.InstructionCodes;
+import be.msec.cardprimitives.smartcard.SignalCodes;
 import be.msec.client.connection.IConnection;
 import be.security.shared.data.Certificate;
 import be.security.shared.data.SignedData;
@@ -30,20 +31,18 @@ public class AuthenticationServiceProvider
 	{
 		SocketTransmitter conn = _getConnection();
 				
-		conn.Send(new Integer(ServiceProviders.BelgianGovernmentIdentity));
+		conn.Send(new Integer(ServiceProviders.DoktersUnie));
 		SignedData<Certificate> cert = conn.ReceiveObject();
 		byte [] signature = cert.signature;
 		printBytes(signature);
-		int length_sig = signature.length;
+		short length_sig = (short)signature.length;
 		byte [] cert_sp = cert.data.toBytes();
 		printBytes(cert_sp);
-		int length_cert = cert_sp.length;
+		short length_cert = (short)cert_sp.length;
 		System.out.println(length_sig + " " + length_cert);
-		byte[] signature_cert = ByteBuffer.allocate(length_sig+length_cert).put(signature).put(cert_sp).array();
-		if(signature.length > MAX_LEN) 
-			_sendInPieces(signature_cert);
-		
-		
+		byte[] signature_cert = ByteBuffer.allocate(length_sig+length_cert+4).putShort(length_sig).putShort(length_cert).put(signature).put(cert_sp).array();
+		if(signature_cert.length > MAX_LEN) 
+			_sendInPieces(signature_cert);				
 	}
 	
 	private static final int MAX_LEN = 255;
@@ -61,19 +60,20 @@ public class AuthenticationServiceProvider
 			if (response.getSW()!=0x9000)
 				throw new Exception("Failed to send piece of signature.");
 		}
+		
 		CommandAPDU command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_AUTH_SP, 0x00, 0x00, new byte[1]);
 		ResponseAPDU response = _cardConnection.transmit(command);
 		
-
-		if (response.getSW()!=0x9000) throw new Exception("Verify SPcert failed");
+		printBytes(response.getData());
 		
-		short result = response.getData()[signature_cert.length+6];	
+		
+		/*short result = response.getData()[signature_cert.length+6];	
 		if(result==0x01)
 		{
 			System.out.println("Signature verified. Time updated!");
 		}
 		else
-			System.out.println("Signature not verified. Time not updated");
+			System.out.println("Signature not verified. Time not updated");*/
 	
 	}
 

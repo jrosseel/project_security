@@ -47,10 +47,10 @@ public class ServiceProvider {
 		
 		KeyNegotiation keyNeg = _connection.ReceiveObject();
 
-		_symmetricKey = Cryptography.decrypt(keyNeg.encryptedKeyNegotiationChallenge, 
-							 				 _keyReader.readPrivate(Config.SP_KEY_NAME,
-							 						  			    Config.SP_KEY_PASSWD));
-		KeyNegotiationChallenge chall = 
+		_symmetricKey = Cryptography.decryptAsync(keyNeg.encryptedKeyNegotiationChallenge, 
+							 				 	  _keyReader.readPrivate(Config.SP_KEY_NAME,
+							 						  			         Config.SP_KEY_PASSWD));
+		//KeyNegotiationChallenge chall =
 		// TODO: Further steps
 	}
 	

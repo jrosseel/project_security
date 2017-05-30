@@ -19,4 +19,7 @@ public class GlobalConsts
 	// Simplification, should be a URI in a real-life case
 	public final static String GOVERNMENT_SERVER_ADDRESS = "127.0.0.1";
 	public final static int GOVERNMENT_PORT = 8081;
+	
+	public final static String SP_SERVER_ADDRESS = "127.0.0.1";
+	public final static int SP_PORT = 8082;
 }	

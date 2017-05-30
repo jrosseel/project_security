@@ -12,5 +12,4 @@ import be.security.shared.settings.GlobalConsts;
 public class Config 
 {
 	public static final String KEYSTORE_LOC = GlobalConsts.KEY_STORE_FOLDER;
-	public static final String KEY_STORE_NAME = "facebook";
 }

@@ -10,7 +10,7 @@ public class Certificate implements Serializable
 	}
 
 	public String subject;
-	public String domain;
+	public int domain;
 	
 	public byte[] publicKey;
 	

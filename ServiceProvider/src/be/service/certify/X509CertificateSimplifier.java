@@ -21,13 +21,13 @@ import be.security.shared.signing.DataSigner;
 public class X509CertificateSimplifier 
 {
 	private KeyReader _keyStore;
-	private String _domain;
+	private int _domain;
 	
 	// Every SP has its own keystore
 	//	 The SP public and private key are stored in the key-pair called "me"
 	private final static String _KEY_NAME   = "me";
 	
-	public X509CertificateSimplifier(String keyStoreName, String storePassword, String domain) 
+	public X509CertificateSimplifier(String keyStoreName, String storePassword, int domain) 
 	{
 		_keyStore = new KeyReader(keyStoreName, storePassword);
 		_domain = domain;

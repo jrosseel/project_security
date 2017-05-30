@@ -16,6 +16,7 @@ import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
 import javacard.framework.APDU;
 import javacard.framework.Applet;
+import javacard.framework.CardException;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.OwnerPIN;
@@ -78,14 +79,14 @@ public class IdentityCard extends Applet {
 		/*RSAPrivateKey priv_co = (RSAPrivateKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PRIVATE, KeyBuilder.LENGTH_RSA_512, false);
 		priv_co.setExponent(exp_priv_co, (short)0, (short)exp_priv_co.length);
 		priv_co.setModulus(mod_priv_co, (short)0, (short)mod_priv_co.length);
-		card.setPrivateKeyCommon(priv_co);
+		card.setPrivateKeyCommon(priv_co);*/
 		
 		// AES key user
 		AESKey ku;
 		ku = (AESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_128, false);
 		// key = nLkAZn239Fja230P
 		ku.setKey(new byte[]{(byte)0x6e, (byte)0x4c, (byte)0x6b, (byte)0x41, (byte)0x5a, (byte)0x6e, (byte)0x32, (byte)0x33, (byte)0x39, (byte)0x46, (byte)0x6a, (byte)0x61, (byte)0x32, (byte)0x33, (byte)0x30, (byte)0x50}, (short)0);
-		card.setKu(ku);*/
+		card.setKu(ku);
 				
 		/*
 		 * This method registers the applet with the JCRE on the card.
@@ -334,6 +335,7 @@ public class IdentityCard extends Applet {
 			else
 			{
 				result = 0;
+				ISOException.throwIt(SignalCodes.SW_UPDATE_TIME_FAILED);
 			}
 
 			byte[] buffer_out = new byte[]{result};

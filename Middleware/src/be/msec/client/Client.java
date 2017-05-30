@@ -52,14 +52,7 @@ public class Client {
 			{
 				System.out.println("Last access time is deprecated. Contacting government to revalidate.");
 				verifier.revalidate();	
-			}			
-			
-			// Step 1: SC -> M 
-			// Check if revalidation request is needed
-			//System.out.println(filterResponse(r.getData(), message.length)[0]);
-			
-			
-			
+			}
 		} catch (Exception e) {
 			throw e;
 		}

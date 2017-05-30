@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.security.PrivateKey;
-import java.security.Signature;
 
 import javax.net.SocketFactory;
 import javax.smartcardio.CommandAPDU;
@@ -14,8 +12,6 @@ import javax.smartcardio.ResponseAPDU;
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.client.connection.IConnection;
 import be.security.shared.data.SignedData;
-import be.security.shared.encryption.Hasher;
-import be.security.shared.keystore.KeyReader;
 import be.security.shared.settings.GlobalConsts;
 import global.connection.sockets.SocketTransmitter;
 
@@ -89,8 +85,6 @@ public class TimestampVerifier {
 		ResponseAPDU response = _cardConnection.transmit(command);		
 				
 		if (response.getSW()!=0x9000) throw new Exception("Updating current failed");
-		
-		////////////////////////////////////
 
 		short result = response.getData()[signature_time.length+6];	
 		if(result==0x01)
@@ -104,14 +98,14 @@ public class TimestampVerifier {
 				
 	}
 	
-	private static void printBytes(byte[] data) {
+	/*private static void printBytes(byte[] data) {
 		String sb1 = "";
 		for (byte b: data) {
 			sb1 +="0x" +  String.format("%02x", b) + " ";
 		}
 		System.out.println(sb1);
 		
-	}
+	}*/
 	
 	private SocketTransmitter _getConnection() throws UnknownHostException, IOException 
 	{

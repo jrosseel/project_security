@@ -16,7 +16,8 @@ import java.io.Serializable;
  * @author JRosseel
  *
  */
-public class ByteSerializer {
+public class ByteSerializer
+{
 	
 	public static byte[] EncodeObject(Serializable obj) 
 		throws IOException 

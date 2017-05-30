@@ -4,7 +4,7 @@ import javacard.security.AESKey;
 import javacard.security.RSAPrivateKey;
 import javacard.security.RSAPublicKey;
 
-public class CardData 
+public final class CardData 
 {
 	private byte[] lastValidationTime  = {0x00, 0x00, 0x01, 0x5c, 0x45, (byte) 0x86, 0x3f, (byte) 0x88}; // 26/05/2017 18:10:45
 	private byte[] nymEgov1; // unique identifier user by first service provider eGov

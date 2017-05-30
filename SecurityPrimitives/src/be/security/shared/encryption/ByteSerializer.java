@@ -74,4 +74,16 @@ public class ByteSerializer
 			catch (IOException ex) { /* ignore close exception */ }
 		}
 	}
+	
+	public static byte[] concatArrays(byte[] arr1, byte[] arr2) {
+		byte[] result = new byte[arr1.length + arr2.length];
+		
+		for(int i = 0; i < arr1.length; i++) 
+			result[i] = arr1[i];
+		
+		for(int i = 0; i < arr2.length; i++) 
+			result[arr1.length + i] = arr2[i];
+		
+		return result;
+	}
 }

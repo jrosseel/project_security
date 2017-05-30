@@ -2,7 +2,10 @@ package be.security.shared.data;
 
 public class KeyNegotiation 
 {
-	public int challenge;
-	public String serviceproviderSubject;
-	public byte[] symmetricKey;
+	// Symmetric key, encrypted using the PK of SP.
+	public byte[] encryptedSymmetricKey;
+	
+	// Challenge, encrypted using the symmetric key 
+	public byte[] encryptedKeyNegotiationChallenge;
+
 }

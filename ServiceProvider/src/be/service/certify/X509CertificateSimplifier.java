@@ -15,6 +15,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import be.security.shared.data.Certificate;
 import be.security.shared.data.SignedData;
+import be.security.shared.encryption.Hasher;
 import be.security.shared.keystore.KeyReader;
 import be.security.shared.signing.DataSigner;
 
@@ -47,7 +48,7 @@ public class X509CertificateSimplifier
 										   "global_masterkey", "123456", 
 										   "CN=Global Masterkey CA,OU=Master Key Holding Vault,O=Master Key Holding Ltd.,L=Luxembourg,ST=Brussels,C=BE,E=contact@jenterosseel.com");
 		
-		return signer.sign(cert, cert.toBytes());
+		return signer.sign(cert, Hasher.hashBytes(cert.toBytes()));
 	}
 	
 	private Certificate _getCertificate() 

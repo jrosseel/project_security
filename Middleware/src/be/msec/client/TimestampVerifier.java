@@ -10,6 +10,7 @@ import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 
 import be.msec.cardprimitives.smartcard.InstructionCodes;
+import be.msec.cardprimitives.smartcard.SignalCodes;
 import be.msec.client.connection.IConnection;
 import be.security.shared.data.SignedData;
 import be.security.shared.settings.GlobalConsts;
@@ -51,7 +52,7 @@ public class TimestampVerifier {
 		 * - P1 = 1 byte
 		 * - P2 = 1 byte
 		 * - Lc = 1 byte
-		 * - data_send_to_card
+		 * - data_to_send_to_card
 		 * - length_of_response
 		 * - response
 		 * 
@@ -86,6 +87,8 @@ public class TimestampVerifier {
 				
 		if (response.getSW()!=0x9000) throw new Exception("Updating current failed");
 
+		if(response.getSW()==SignalCodes.SW_UPDATE_TIME_FAILED) throw new Exception("Could not update time: verification failed.");
+		
 		short result = response.getData()[signature_time.length+6];	
 		if(result==0x01)
 		{

@@ -53,6 +53,10 @@ public class Client {
 				System.out.println("Last access time is deprecated. Contacting government to revalidate.");
 				verifier.revalidate();	
 			}
+			
+			AuthenticationServiceProvider asp = new AuthenticationServiceProvider(c);
+			
+			
 		} catch (Exception e) {
 			throw e;
 		}

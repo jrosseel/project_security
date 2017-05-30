@@ -18,6 +18,7 @@ import javax.crypto.NoSuchPaddingException;
 import be.security.shared.data.SignedData;
 import be.security.shared.encryption.Hasher;
 import be.security.shared.keystore.KeyReader;
+import be.security.shared.settings.GlobalConsts;
 
 public class DataSigner 
 {
@@ -39,18 +40,33 @@ public class DataSigner
 	public <T extends Serializable> SignedData<T> sign(T data) 
 			throws IOException, UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException 
 	{
-		PrivateKey pen = _getPen();
-		
 		// Encode the object
 		byte[] hash = Hasher.hashObject(data);
-			
+
+		return sign(data, hash);
+	}
+	
+	public <T extends Serializable> SignedData<T> sign(T data, byte[] hash) 
+			throws IOException, UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException 
+	{
+		byte[] signature = signHash(hash);
+		    
+		return new SignedData<T>(data, _issuer, signature);
+	}
+	
+
+	public byte[] signHash(byte[] hash) 
+			throws SignatureException, NoSuchAlgorithmException, InvalidKeyException, UnrecoverableKeyException, KeyStoreException, CertificateException, IOException
+	{ 
+		PrivateKey pen = _getPen();
+		
 		Signature signer;
-	    signer = Signature.getInstance("SHA1withRSA");
+	    signer = Signature.getInstance(GlobalConsts.SIGNATURE_ALGORITHM);
 	    signer.initSign(pen);
 	    signer.update(hash);
 	    byte[] signature = signer.sign();
-		    
-		return new SignedData<T>(data, _issuer, signature);
+		
+	    return signature;
 	}
 	
 	

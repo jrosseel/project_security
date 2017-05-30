@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.Signature;
 
@@ -76,33 +75,14 @@ public class TimestampVerifier {
 	public void revalidate() 
 			throws Exception 
 	{
-		/*SocketTransmitter conn = _getConnection();
-		
+		SocketTransmitter conn = _getConnection();
+	
 		// Contact government to get current time
 		SignedData<Long> timeStamp = conn.ReceiveObject();
-
-		*/
-
-		
-		////////////////////// TEST TEST TEST TEST /////////////////////////
-		// Hasher.hashObject doesn't produce the right hash, hashBytes does. 
-		// Putted everything here to just test if verification works
-		KeyReader k = new KeyReader("government", "123456");
-		PrivateKey sk = k.readPrivate("gov_timestamp_server", "");
-		
-		long now = System.currentTimeMillis();
-		MessageDigest md = MessageDigest.getInstance(GlobalConsts.HASH_ALGORITHM);
-		
-		byte[] hash = md.digest(ByteBuffer.allocate(Long.BYTES).putLong(now).array());
-		Signature signer;
-	    signer = Signature.getInstance("SHA1withRSA");
-	    signer.initSign(sk);
-	    signer.update(hash);
-	    byte[] signature = signer.sign();
 		
 		int length_time = 8;
 		int length_signature = 64;
-		byte[] signature_time = ByteBuffer.allocate(length_time+length_signature).put(signature).putLong(now).array();
+		byte[] signature_time = ByteBuffer.allocate(length_time+length_signature).put(timeStamp.signature).putLong(timeStamp.data).array();
 		
 		
 		CommandAPDU  command  = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_NEW_TIME_INS, 0x00, 0x00, signature_time ,0x7f);

@@ -14,6 +14,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import be.gov.config.Config;
 import be.security.shared.data.SignedData;
+import be.security.shared.encryption.Hasher;
 import be.security.shared.signing.DataSigner;
 
 public class Revalidation
@@ -22,7 +23,9 @@ public class Revalidation
 						throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, IOException, SignatureException {
 		
 		System.out.println("Entered gov server");
+		
 		Long now = System.currentTimeMillis();
+		byte[] hash = Hasher.hashLong(now);
 		
 		DataSigner signer = new DataSigner(Config.KEY_STORE_NAME, 
 										   Config.KEY_STORE_PASSWD, 
@@ -30,6 +33,6 @@ public class Revalidation
 										   Config.SERVER_KEY_PASSWD, 
 										   Config.SERVER_ISSUER);
 		
-		return signer.sign(now);
+		return signer.sign(now, hash);
 	}
 }

@@ -12,6 +12,8 @@ public class GlobalConsts
 	
 	public final static String CRYPTO_ALGORITHM = "RSA"; 
 	public static final String HASH_ALGORITHM = "SHA-1";
+
+	public static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
 	
 	
 	// Simplification, should be a URI in a real-life case

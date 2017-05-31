@@ -467,7 +467,7 @@ public class IdentityCard extends Applet {
 	
 	private void _doServAuthEkey(APDU apdu)
 	{
-		byte[] secure_rand = new byte[20];
+		byte[] secure_rand = new byte[16];
 		RandomData rnd = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
         rnd.generateData(secure_rand, (short)0, (short)secure_rand.length);
 		

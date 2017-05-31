@@ -24,7 +24,7 @@ public class InstructionCodes {
 	public static final byte DO_AUTH_SP_STEP = (byte)0x39;
 	public static final byte GET_AUTH_SER_EKEY = (byte)0x40;
 	public static final byte GET_AUTH_SER_EMSG = (byte)0x41;
-	
+	public static final byte DO_CHECK_SERVER_RESP = (byte)0x42;
 	
 	public final static byte PIN_TRY_LIMIT =(byte)0x03;
 	public final static byte PIN_SIZE =(byte)0x04;

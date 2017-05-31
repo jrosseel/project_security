@@ -1,6 +1,7 @@
 package be.msec.client;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -13,6 +14,8 @@ import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
 import be.msec.client.connection.IConnection;
 import be.security.shared.data.Certificate;
+import be.security.shared.data.KeyNegotiation;
+import be.security.shared.data.KeyNegotiationResponse;
 import be.security.shared.data.SignedData;
 import be.security.shared.settings.GlobalConsts;
 import global.connection.sockets.SocketTransmitter;
@@ -93,6 +96,20 @@ public class AuthenticationServiceProvider
 				emsg[i] = response.getData()[i+7];
 			}
 			printBytes(emsg);
+
+			// connect to server and send emsg and ekey
+			SocketTransmitter conn = _getConnection();
+			//...
+			
+			// recieve 
+			KeyNegotiationResponse keyResponse = conn.ReceiveObject();
+			byte[] key_resp = keyResponse.challengeResponse;
+			
+			command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_CHECK_SERVER_RESP, 0x00, 0x00, key_resp);
+			response = _cardConnection.transmit(command);
+			
+			
+			
 		}
 	}
 

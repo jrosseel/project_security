@@ -247,6 +247,9 @@ public class IdentityCard extends Applet {
 			case InstructionCodes.GET_AUTH_SER_EMSG:
 				_doServAuthEmsg(apdu);
 				break;
+			case InstructionCodes.DO_CHECK_SERVER_RESP:
+				_doCheckServerResp(apdu);
+				break;
 				
 			//If no matching instructions are found it is indicated in the status word of the response.
 			//This can be done by using this method. As an argument a short is given that indicates
@@ -487,7 +490,7 @@ public class IdentityCard extends Applet {
 	
 	private void _doServAuthEmsg(APDU apdu)
 	{
-		challenge = new byte[20];
+		challenge = new byte[4];
 		RandomData rnd = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
 		rnd.generateData(challenge, (short)0, (short)challenge.length);
 		
@@ -599,6 +602,24 @@ public class IdentityCard extends Applet {
 		pub_sp.setExponent(exp, (short)0, (short)exp.length);
 		pub_sp.setModulus(mod, (short)0, (short)mod.length);
 		
+	}
+	
+	private void _doCheckServerResp(APDU apdu)
+	{
+		if ( ! pin.isValidated()) ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
+		else{
+			byte[] buffer_in = apdu.getBuffer();
+			short offset = (short) (ISO7816.OFFSET_CDATA);
+			byte length_response = (short)(ISO7816.OFFSET_LC);
+
+			byte[] buffer_out = new byte[]{length_response};
+			
+			apdu.setOutgoing();
+			
+			apdu.setOutgoingLength((short)buffer_out.length);
+			apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
+			
+		}
 	}
 	
 	private void _doAuthCard(APDU apdu)

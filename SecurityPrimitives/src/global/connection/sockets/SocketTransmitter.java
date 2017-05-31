@@ -1,20 +1,28 @@
 package global.connection.sockets;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.Socket;
 
 /**
  * Class that allows data tranmission over sockets. */
-public class SocketTransmitter 
+public class SocketTransmitter
 {
 
 	private Socket _socket;
+	private InputStream _in;
+	private OutputStream _out;
 	
-	public SocketTransmitter(Socket s) {
+	public SocketTransmitter(Socket s) 
+			throws IOException 
+	{
 		_socket = s;
+		_in = _socket.getInputStream();
+		_out = _socket.getOutputStream();
 	}
 	
 	/**
@@ -25,8 +33,7 @@ public class SocketTransmitter
 	public void Send(Serializable obj) 
 			throws IOException 
 	{
-		ObjectOutputStream output = new ObjectOutputStream(_socket.getOutputStream());
-		
+		ObjectOutputStream output = new ObjectOutputStream(_out);
 		output.writeObject(obj);
 	}
 	
@@ -39,8 +46,8 @@ public class SocketTransmitter
 	public <T extends Serializable> T ReceiveObject()
 		throws IOException, ClassNotFoundException
 	{
-		ObjectInputStream input = new ObjectInputStream(_socket.getInputStream());
-		
+
+		ObjectInputStream input = new ObjectInputStream(_in);
 		return (T) input.readObject();
 	}
 	

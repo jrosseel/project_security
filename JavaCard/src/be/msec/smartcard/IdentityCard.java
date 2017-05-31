@@ -16,7 +16,7 @@ import java.security.spec.InvalidKeySpecException;
 
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
-import be.security.shared.data.Certificate;
+//import be.security.shared.data.Certificate;
 import javacard.framework.APDU;
 import javacard.framework.Applet;
 import javacard.framework.ISO7816;
@@ -474,7 +474,7 @@ public class IdentityCard extends Applet {
 		// symmetric key
 		ks = (AESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_128, false);
 		ks.setKey(secure_rand, (short)0);
-		
+		ks.
 		// asymmetric encryption of key
 		RSAencrypt.init(pub_sp, Cipher.MODE_ENCRYPT);
 		e_key = new byte[64]; 

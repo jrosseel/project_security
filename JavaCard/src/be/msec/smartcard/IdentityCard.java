@@ -1,16 +1,22 @@
 package be.msec.smartcard;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
+import be.security.shared.data.Certificate;
 import javacard.framework.APDU;
 import javacard.framework.Applet;
 import javacard.framework.ISO7816;
@@ -366,23 +372,27 @@ public class IdentityCard extends Applet {
         authStep += 1;
 	}	
 	
-	private void _doAuthSP(APDU apdu)
+	private byte[] subject = null; 
+	private byte[] domain = null;
+	private RSAPublicKey key = null;
+	private byte[]time = null;
+	private void _doAuthSP(APDU apdu) throws CertificateException
 	{
 		if ( ! pin.isValidated()) 
 			ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
 		authStep = 0;
-		
+		byte result = 3;
 		// Dirty fix to get length of signature 
 		ByteBuffer b_sig_len = ByteBuffer.wrap(new byte[]{authBuffer[0], authBuffer[1]});
 		short sig_len = b_sig_len.getShort();
-		
+				
 		// Same for length certificate
 		ByteBuffer b_cert_len = ByteBuffer.wrap(new byte[]{authBuffer[2], authBuffer[3]});
 		short cert_len = b_cert_len.getShort();
-		
+
 		// offsets
 		short off_sig = 4; // signature start at fifth pos of authBuffer
-		short off_cert = (short)(off_sig + sig_len);
+		short off_cert = (short)(off_sig + sig_len);	
 			
 		// fill arrays with signature and certificate
 		byte[] signature = new byte[sig_len];
@@ -391,6 +401,7 @@ public class IdentityCard extends Applet {
 		{
 			signature[i] = authBuffer[off_sig+i];
 		}
+		
 		for(short i=0; i<cert_len; i++)
 		{
 			cert[i] = authBuffer[off_cert+i];
@@ -404,11 +415,22 @@ public class IdentityCard extends Applet {
 		Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
 		sig.init(card.getPublicKeyCA(), Signature.MODE_VERIFY);
 	
-		byte result = 2;
 		if(sig.verify(hash, (short)0, (short)hash.length, signature, (short)0, (short)signature.length))
-		{
-			// do other steps
-			
+		{			
+			splitCertificate(cert);
+			// Check if endtime < lastval
+			result = 2;
+			for(short i=0; i<8;i++)
+			{
+				if(!(time[i]==card.getLastValidationTime()[i]))
+				{
+					if(time[i] < card.getLastValidationTime()[i])
+					{
+						ISOException.throwIt(SignalCodes.SW_VERIFICATION_CERT_FAILED);
+					}
+					break;
+				}
+			}			
 		}
 		else
 		{
@@ -421,7 +443,80 @@ public class IdentityCard extends Applet {
 		apdu.setOutgoingLength((short)buffer_out.length);
 		apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
 		
-	}	
+	}
+		
+	private void splitCertificate(byte[]cert)
+	{
+		short offset = 8;
+		// length of subject, subject itself
+		ByteBuffer b_subj_len = ByteBuffer.wrap(new byte[]{cert[0], cert[1]});
+		short subj_len = b_subj_len.getShort();
+		subject = new byte[subj_len];
+		for(short i=0; i<subj_len; i++)
+		{
+			subject[i] = cert[offset+i];
+		}
+		
+		// length of domain, domain itself
+		ByteBuffer b_dom_len = ByteBuffer.wrap(new byte[]{cert[2], cert[3]});
+		short dom_len = b_dom_len.getShort();
+		domain = new byte[dom_len];
+		for(short i=0; i<dom_len; i++)
+		{
+			domain[i] = cert[offset+subj_len+i];
+		}
+		
+		// length of publicKey, publicKey itself
+		ByteBuffer b_pub_len = ByteBuffer.wrap(new byte[]{cert[4], cert[5]});
+		short pub_len = b_pub_len.getShort();
+		byte[] key_helper = new byte[pub_len];
+		for(short i=0; i<pub_len; i++)
+		{
+			if(i==0)
+			{
+				// check if first byte = 0x00. If so, don't put in array
+				if(cert[offset+subj_len+dom_len+i] != 0x00)
+				{
+					key_helper[i] = cert[offset+subj_len+dom_len+i];
+				}
+			}
+			key_helper[i] = cert[offset+subj_len+dom_len+i];
+		}
+		
+		// length of date, date itself
+		ByteBuffer b_time_len = ByteBuffer.wrap(new byte[]{cert[6], cert[7]});
+		short time_len = b_time_len.getShort();
+		time = new byte[time_len];
+		for(short i=0; i<time_len; i++)
+		{
+			time[i] = cert[offset+subj_len+dom_len+pub_len+i];
+		}
+		
+		// generate public key
+		// get modulus
+		short mod_len = 64;
+		short exp_len = 3;
+		// also -2 => don't know where these bytes stand for?
+		short off_mod = (short)(key_helper.length-mod_len-exp_len-2);
+		byte[] mod = new byte[64];
+		for(short i=0; i<64; i++)
+		{
+			mod[i] = key_helper[off_mod+i];
+		}
+		
+		// get public exponent
+		short off_exp = (short)(key_helper.length-exp_len);
+		byte[] exp = new byte[3];
+		for(short i=0; i<3; i++)
+		{
+			exp[i] = key_helper[off_exp+i];
+		}
+		
+		key = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+		key.setExponent(exp, (short)0, (short)exp.length);
+		key.setModulus(mod, (short)0, (short)mod.length);
+		
+	}
 	
 	private void _doAuthCard(APDU apdu)
 	{

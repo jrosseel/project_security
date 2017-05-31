@@ -60,7 +60,7 @@ public class X509CertificateSimplifier
 		cert.domain = _domain;
 		cert.subject = x509.getSubjectX500Principal().getName();
 		cert.publicKey = x509.getPublicKey().getEncoded();
-		
+		cert.endtime = x509.getNotAfter().getTime();
 		return cert;
 	}
 }

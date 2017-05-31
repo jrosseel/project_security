@@ -19,9 +19,13 @@ public class InstructionCodes {
 	public static final byte GET_PHOTO_INS = (byte)0x34;
 	public static final byte GET_SSN_INS = (byte)0x35;
 	public static final byte DO_NEW_TIME_INS = (byte)0x36;
-	public static final byte DO_AUTH_SP = (byte)0x37;	
-	public static final byte DO_AUTH_SP_STEP = (byte)0x39;	
+	public static final byte DO_AUTH_SP = (byte)0x37;		
 	public static final byte DO_AUTH_CARD = (byte)0x38;
+	public static final byte DO_AUTH_SP_STEP = (byte)0x39;
+	public static final byte GET_AUTH_SER_EKEY = (byte)0x40;
+	public static final byte GET_AUTH_SER_EMSG = (byte)0x41;
+	
+	
 	public final static byte PIN_TRY_LIMIT =(byte)0x03;
 	public final static byte PIN_SIZE =(byte)0x04;
 	

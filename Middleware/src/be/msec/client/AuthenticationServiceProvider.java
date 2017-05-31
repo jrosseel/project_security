@@ -63,18 +63,37 @@ public class AuthenticationServiceProvider
 		
 		CommandAPDU command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_AUTH_SP, 0x00, 0x00, new byte[1]);
 		ResponseAPDU response = _cardConnection.transmit(command);
-		
-		printBytes(response.getData());
-		
-		
-		/*short result = response.getData()[signature_cert.length+6];	
-		if(result==0x01)
+		if (response.getSW()==SignalCodes.SW_VERIFICATION_CERT_FAILED) throw new Exception("Verification of certificate failed");
+		if (response.getSW()==SignalCodes.SW_TIME_CERTIFICATE_EXPIRED) throw new Exception("Time on certificate expired");
+		if(response.getData()[7]==0x01)
 		{
-			System.out.println("Signature verified. Time updated!");
+			System.out.println("Authentication service provider: OK!");
+			
+			// get encrypted messages Ekey and Emsg
+			command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.GET_AUTH_SER_EKEY, 0x00, 0x00, new byte[1]);
+			response = _cardConnection.transmit(command);
+			System.out.println("The Ekey is: ");
+			
+			int length_ekey = response.getData()[6]; // => automatically converts byte to int
+			byte[] ekey = new byte[length_ekey];
+			for(int i=0; i<length_ekey; i++)
+			{
+				ekey[i] = response.getData()[i+7];
+			}
+			printBytes(ekey);
+						
+			command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.GET_AUTH_SER_EMSG, 0x00, 0x00, new byte[1]);
+			response = _cardConnection.transmit(command);
+			System.out.println("The Emsg is: ");
+			int length_emsg = response.getData()[6] & 0xFF; // => automatically converts byte to int. & 0xFF so it's always positive
+			System.out.println(length_emsg);
+			byte[] emsg = new byte[length_emsg];
+			for(int i=0; i<length_emsg; i++)
+			{
+				emsg[i] = response.getData()[i+7];
+			}
+			printBytes(emsg);
 		}
-		else
-			System.out.println("Signature not verified. Time not updated");*/
-	
 	}
 
 	private SocketTransmitter _getConnection() throws UnknownHostException, IOException 

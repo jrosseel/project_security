@@ -29,7 +29,9 @@ import javacard.security.KeyBuilder;
 import javacard.security.MessageDigest;
 import javacard.security.RSAPrivateKey;
 import javacard.security.RSAPublicKey;
+import javacard.security.RandomData;
 import javacard.security.Signature;
+import javacardx.crypto.Cipher;
 
 public class IdentityCard extends Applet {
 	
@@ -42,7 +44,10 @@ public class IdentityCard extends Applet {
     private final byte[] mod_priv_co = new byte[]{(byte)0xbe, (byte)0x6d, (byte)0x72, (byte)0x7f, (byte)0xae, (byte)0xd1, (byte)0x1d, (byte)0x34, (byte)0xe2, (byte)0xaf, (byte)0x74, (byte)0xe2, (byte)0x3e, (byte)0xf5, (byte)0x51, (byte)0x9f, (byte)0xb4, (byte)0xf0, (byte)0x2b, (byte)0xb0, (byte)0xfb, (byte)0xab, (byte)0xbb, (byte)0x61, (byte)0x3f, (byte)0xab, (byte)0xd2, (byte)0x12, (byte)0xdb, (byte)0xa7, (byte)0x95, (byte)0xd8, (byte)0x2b, (byte)0xc9, (byte)0x26, (byte)0x2f, (byte)0x3c, (byte)0xff, (byte)0x99, (byte)0x4a, (byte)0x09, (byte)0x10, (byte)0x64, (byte)0x14, (byte)0x95, (byte)0x3e, (byte)0x03, (byte)0xd5, (byte)0x86, (byte)0xa3, (byte)0x30, (byte)0x39, (byte)0xa8, (byte)0x39, (byte)0xd3, (byte)0xe8, (byte)0xbe, (byte)0xe3, (byte)0x8d, (byte)0x39, (byte)0x11, (byte)0x1e, (byte)0x53, (byte)0x6f};       
     private final byte[] exp_priv_co = new byte[]{(byte)0x12, (byte)0x14, (byte)0x82, (byte)0x2c, (byte)0x20, (byte)0x85, (byte)0x03, (byte)0xdc, (byte)0x16, (byte)0x63, (byte)0x62, (byte)0x4d, (byte)0x9f, (byte)0x49, (byte)0x75, (byte)0x18, (byte)0x1c, (byte)0xc7, (byte)0x6a, (byte)0x78, (byte)0x28, (byte)0x20, (byte)0x37, (byte)0xa2, (byte)0x48, (byte)0xea, (byte)0xec, (byte)0x32, (byte)0x61, (byte)0x5e, (byte)0xff, (byte)0xff, (byte)0xca, (byte)0xb5, (byte)0x72, (byte)0x7d, (byte)0xf3, (byte)0x78, (byte)0x46, (byte)0x53, (byte)0xe4, (byte)0x46, (byte)0x47, (byte)0x5d, (byte)0xd9, (byte)0xe6, (byte)0xda, (byte)0xcf, (byte)0x2a, (byte)0xa2, (byte)0x0b, (byte)0x26, (byte)0x71, (byte)0xba, (byte)0x02, (byte)0xc0, (byte)0x09, (byte)0x3d, (byte)0x3a, (byte)0xeb, (byte)0xe6, (byte)0xed, (byte)0x89, (byte)0x81};
     private OwnerPIN pin;
-	
+	private AESKey ks;
+	private byte[] challenge; 
+	private Cipher RSAencrypt = Cipher.getInstance(Cipher.ALG_RSA_PKCS1 , false);
+	private Cipher AESencrypt = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
 	//input above instance variables into info below
 	private byte[] info;
 	private short incomingData;
@@ -236,6 +241,12 @@ public class IdentityCard extends Applet {
 			case InstructionCodes.DO_AUTH_CARD:
 				_doAuthCard(apdu);
 				break;
+			case InstructionCodes.GET_AUTH_SER_EKEY:
+				_doServAuthEkey(apdu);
+				break;
+			case InstructionCodes.GET_AUTH_SER_EMSG:
+				_doServAuthEmsg(apdu);
+				break;
 				
 			//If no matching instructions are found it is indicated in the status word of the response.
 			//This can be done by using this method. As an argument a short is given that indicates
@@ -374,7 +385,7 @@ public class IdentityCard extends Applet {
 	
 	private byte[] subject = null; 
 	private byte[] domain = null;
-	private RSAPublicKey key = null;
+	private RSAPublicKey pub_sp = null;
 	private byte[]time = null;
 	private void _doAuthSP(APDU apdu) throws CertificateException
 	{
@@ -414,12 +425,11 @@ public class IdentityCard extends Applet {
 		
 		Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
 		sig.init(card.getPublicKeyCA(), Signature.MODE_VERIFY);
-	
 		if(sig.verify(hash, (short)0, (short)hash.length, signature, (short)0, (short)signature.length))
 		{			
 			splitCertificate(cert);
 			// Check if endtime < lastval
-			result = 2;
+			result = 1;
 			for(short i=0; i<8;i++)
 			{
 				if(!(time[i]==card.getLastValidationTime()[i]))
@@ -430,21 +440,94 @@ public class IdentityCard extends Applet {
 					}
 					break;
 				}
-			}			
+			}		
+			
+			// challenge
+			
+
 		}
 		else
 		{
 			ISOException.throwIt(SignalCodes.SW_VERIFICATION_CERT_FAILED);
-		}
-		
+		}		
 		
 		byte[] buffer_out = new byte[]{result};
+		
 		apdu.setOutgoing();
+		
 		apdu.setOutgoingLength((short)buffer_out.length);
 		apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
+	}		
+	
+	private byte[] e_key;
+	private byte[] e_msg;
+	
+	private void _doServAuthEkey(APDU apdu)
+	{
+		byte[] secure_rand = new byte[20];
+		RandomData rnd = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
+        rnd.generateData(secure_rand, (short)0, (short)secure_rand.length);
 		
+		// symmetric key
+		ks = (AESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_128, false);
+		ks.setKey(secure_rand, (short)0);
+		
+		// asymmetric encryption of key
+		RSAencrypt.init(pub_sp, Cipher.MODE_ENCRYPT);
+		e_key = new byte[64]; 
+		RSAencrypt.doFinal(secure_rand, (short)0, (short)secure_rand.length, e_key, (short)0);
+		
+		byte[] buffer_out = e_key;
+		
+		apdu.setOutgoing();
+		
+		apdu.setOutgoingLength((short)buffer_out.length);
+		apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
 	}
+	
+	private void _doServAuthEmsg(APDU apdu)
+	{
+		challenge = new byte[20];
+		RandomData rnd = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
+		rnd.generateData(challenge, (short)0, (short)challenge.length);
 		
+		// encrypt challenge and subject. Length = 4 (2 shorts defining the length of challenge and subject) + challenge + subject
+		short needed = 0;
+		short encrypt_length = (short)(4+challenge.length+subject.length);
+		// array has to be a multiple of 16
+		if(encrypt_length%16!=0)
+		{
+			needed = (short)(16-(encrypt_length%16));
+			encrypt_length = (short)(encrypt_length+needed);
+		}
+		byte[] to_encrypt =  ByteBuffer.allocate(encrypt_length).putShort((short) challenge.length)
+																					.putShort((short) subject.length)
+																					.put(challenge)
+																					.put(subject).array();
+		e_msg = new byte[encrypt_length];
+		// encrypt the bytebuffer above
+		AESencrypt.init(ks, Cipher.MODE_ENCRYPT);
+		byte[] temp = new byte[16];
+		
+		short max = (short)(encrypt_length/16); 
+		short current = 0;
+		for(short i=0; i<max; i++)
+		{
+			// encrypt block per block
+			AESencrypt.doFinal(to_encrypt, (short)(0+(current*16)), (short)16, temp, (short)0);
+			Util.arrayCopy(temp, (short) 0, e_msg, (short)(0+(current*16)), (short) 16);
+			current++;
+		}
+		
+		byte[] buffer_out = e_msg;
+		
+		apdu.setOutgoing();
+		
+		apdu.setOutgoingLength((short)buffer_out.length);
+		apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
+	}
+	
+	
 	private void splitCertificate(byte[]cert)
 	{
 		short offset = 8;
@@ -512,9 +595,9 @@ public class IdentityCard extends Applet {
 			exp[i] = key_helper[off_exp+i];
 		}
 		
-		key = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
-		key.setExponent(exp, (short)0, (short)exp.length);
-		key.setModulus(mod, (short)0, (short)mod.length);
+		pub_sp = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+		pub_sp.setExponent(exp, (short)0, (short)exp.length);
+		pub_sp.setModulus(mod, (short)0, (short)mod.length);
 		
 	}
 	

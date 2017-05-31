@@ -23,7 +23,8 @@ import global.connection.sockets.routing.ServiceProviders;
 
 public class AuthenticationServiceProvider
 {	
-	IConnection _cardConnection;
+	private IConnection _cardConnection;
+	private SocketTransmitter _serverConnection;
 	
 	public AuthenticationServiceProvider(IConnection cardConnection) {
 		_cardConnection = cardConnection;
@@ -32,10 +33,10 @@ public class AuthenticationServiceProvider
 	public void authenticate() 
 			throws Exception 
 	{
-		SocketTransmitter conn = _getConnection();
+		_serverConnection = _createConnection();
 				
-		conn.Send(new Integer(ServiceProviders.DoktersUnie));
-		SignedData<Certificate> cert = conn.ReceiveObject();
+		_serverConnection.Send(new Integer(ServiceProviders.DoktersUnie));
+		SignedData<Certificate> cert = _serverConnection.ReceiveObject();
 		byte [] signature = cert.signature;
 		printBytes(signature);
 		short length_sig = (short)signature.length;
@@ -96,24 +97,26 @@ public class AuthenticationServiceProvider
 				emsg[i] = response.getData()[i+7];
 			}
 			printBytes(emsg);
-
-			// connect to server and send emsg and ekey
-			SocketTransmitter conn = _getConnection();
-			//...
 			
-			// recieve 
-			KeyNegotiationResponse keyResponse = conn.ReceiveObject();
+			KeyNegotiation keyNeg = new KeyNegotiation();
+			keyNeg.encryptedSymmetricKey = ekey;
+			keyNeg.encryptedKeyNegotiationChallenge = emsg;
+			// connect to server and send emsg and ekey
+			System.out.println("Sending key negotiation answer.");
+			_serverConnection.Send(keyNeg);
+			
+			// receive key response
+			KeyNegotiationResponse keyResponse = _serverConnection.ReceiveObject();
+			System.out.println("Received challenge response");
+			
 			byte[] key_resp = keyResponse.challengeResponse;
 			
 			command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_CHECK_SERVER_RESP, 0x00, 0x00, key_resp);
 			response = _cardConnection.transmit(command);
-			
-			
-			
 		}
 	}
 
-	private SocketTransmitter _getConnection() throws UnknownHostException, IOException 
+	private SocketTransmitter _createConnection() throws UnknownHostException, IOException 
 	{
 		SocketFactory ssf = SocketFactory.getDefault();
 		

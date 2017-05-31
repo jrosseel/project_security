@@ -1,6 +1,7 @@
 package be.security.shared.data;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import be.security.shared.encryption.ByteSerializer;
 
@@ -24,7 +25,8 @@ public class KeyNegotiationChallenge {
 	{
 		KeyNegotiationChallenge result = new KeyNegotiationChallenge();
 		result.challenge = ByteBuffer.wrap(data).getInt();
-		result.subject = new String(data);
+							// int is 4 bytes
+		result.subject = new String(Arrays.copyOfRange(data, 4, data.length));
 		
 		return result;
 	}

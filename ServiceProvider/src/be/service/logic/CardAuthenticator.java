@@ -45,5 +45,6 @@ public class CardAuthenticator {
 	{
 		byte[] replyMessage = Cryptography.decryptSymmetric(reply, _symmetricKey);
 		// TODO. properly decode
+		
 	}
 }

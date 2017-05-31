@@ -99,7 +99,7 @@ public class ServiceProvider {
 													 key);
 						// Symm key stored as getEncoded
 		_symmetricKey = new SecretKeySpec(encodedSymmetricKey, GlobalConsts.SYMM_CRYPTO_ALGORITHM);
-		
+
 		System.out.println("Decrypting challenge.");
 		byte[] encodedChallenge = Cryptography.decryptSymmetric(keyNeg.encryptedKeyNegotiationChallenge, _symmetricKey);
 		KeyNegotiationChallenge neg = KeyNegotiationChallenge.decode(encodedChallenge);

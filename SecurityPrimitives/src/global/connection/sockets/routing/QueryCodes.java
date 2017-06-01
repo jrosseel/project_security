@@ -17,4 +17,32 @@ public class QueryCodes
 	public static final byte SSN_REQUEST 		= (byte) 0x08;
 	
 	public static final byte STOP 				= (byte) 0x11;
+	
+	
+	public static String GetAttributeName(byte code)
+	{
+		switch(code)
+		{
+		case NYM:
+			return "Nym";
+		case NAME_REQUEST:
+			return "Name";
+		case ADDRESS_REQUEST:
+			return "Address";
+		case COUNTRY_REQUEST:
+			return "Country";
+		case BIRTHDATE_REQUEST:
+			return "Birthdate";
+		case AGE_REQUEST:
+			return "Age";
+		case GENDER_REQUEST:
+			return "Gender";
+		case PHOTO_REQUEST:
+			return "Photo";
+		case SSN_REQUEST:
+			return "Social Security Number";
+		}
+		
+		throw new RuntimeException("Unknown Query Code.");
+	}
 }

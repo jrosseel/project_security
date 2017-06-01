@@ -31,6 +31,7 @@ import be.service.certify.X509CertificateSimplifier;
 import be.service.config.Config;
 import be.service.config.ServerException;
 import be.service.logic.CardAuthenticator;
+import be.service.logic.QueryResultReader;
 import be.service.logic.Queryer;
 import global.connection.sockets.SocketTransmitter;
 
@@ -93,6 +94,10 @@ public class ServiceProvider {
 			System.out.println("Query answer received. Printing data");
 			QueryMedium queryResp = _connection.ReceiveObject();
 			
+			QueryResultReader qParser = new QueryResultReader(queryResp.data);
+			_printAttributeData(qParser.read());
+			
+			System.out.println("Service provider job is done. Waiting for the next request.");
 		} 
 		catch (ServerException e) 
 		{	
@@ -141,5 +146,10 @@ public class ServiceProvider {
 						.getSignedCertificate();
 	}
 
-	
+	private void _printAttributeData(String[] read) {
+		for(int i = 0; i < read.length; i++) {
+			System.out.println((i + 1) + ": " + read[i]);
+		}
+	}
+
 }

@@ -51,6 +51,7 @@ public class IdentityCard extends Applet {
 	private byte[] info;
 	private short incomingData;
 	private short auth = 0;
+	private byte[] domain = null;
 	//	private short newPin;
 	
 	private IdentityCard() {
@@ -386,7 +387,7 @@ public class IdentityCard extends Applet {
 	}	
 	
 	private byte[] subject = null; 
-	private byte[] domain = null;
+	
 	private RSAPublicKey pub_sp = null;
 	private byte[]time = null;
 	private void _doAuthSP(APDU apdu) throws CertificateException
@@ -742,10 +743,11 @@ public class IdentityCard extends Applet {
 		else{
 			// buffer contains Emsg
 			byte[] buffer_in = apdu.getBuffer();			
-			short offset = (short) (ISO7816.OFFSET_CDATA); 
-			byte[] requested = new byte[buffer_in.length-offset];
-			
-			for(short i=0; i<buffer_in.length-offset; i++)
+			short offset = (short) 5; 
+			short length = ByteBuffer.wrap(new byte[]{0x00, buffer_in[4]}).getShort();
+			byte[] requested = new byte[length];
+			byte result = 1;
+			for(short i=0; i<length; i++)
 			{
 				requested[i] = buffer_in[offset+i];
 			}
@@ -756,8 +758,8 @@ public class IdentityCard extends Applet {
 				ISOException.throwIt(SignalCodes.SW_AUTHENTICATION_CARD_FAILED);
 			}
 			
-			short domain_code = ByteBuffer.wrap(new byte[]{authBuffer[0], authBuffer[1]}).getShort();
-			if(!DataRestrictions.IsAllowedAccess(requested, (byte)domain_code))
+			byte domain_code = domain[1];
+			if(!DataRestrictions.IsAllowedAccess(requested, domain_code))
 				ISOException.throwIt(SignalCodes.SW_QUERY_RIGHTS_FAILED);
 			
 			// Construct nym
@@ -770,11 +772,10 @@ public class IdentityCard extends Applet {
 			
 			// query results;
 			QueryResolver res = new QueryResolver(card);
-			byte[] results = res.resolveQuery(requested);
-					
+			byte[] results = res.resolveQuery(requested);		
 					
 			// Final data = nym + results: sym encrypt
-			short encrypt_length = (short)(results.length+card.getNym().length); 
+			short encrypt_length = (short)(results.length+card.getNym().length+3); 
 			short needed = 0;		
 			byte[]extra = null;
 			if(encrypt_length%16!=0)
@@ -783,7 +784,12 @@ public class IdentityCard extends Applet {
 				encrypt_length = (short)(encrypt_length+needed);
 				extra = new byte[needed];
 			}
-			byte[] final_data = ByteBuffer.allocate(card.getNym().length+results.length+needed).put(card.getNym()).put(results).put(extra).array();		
+			
+			// Allways return nym + some extra field
+			// One field= [QueryCode, length_datafield, datafield] => QueryCode = 1 byte, length_datafield = 2 bytes (short) => so always need 3 bytes + length of datafield
+			byte[] final_data = ByteBuffer.allocate(card.getNym().length+results.length+3+needed).put((byte)0x00).putShort((short) card.getNym().length).put(card.getNym()).put(results).put(extra).array();		
+			
+			
 			
 			byte[] e_attributes = new byte[encrypt_length];
 			// encrypt the bytebuffer above

@@ -24,7 +24,7 @@ public class ReleaseAttributes {
 		System.out.println("Waiting for Service Provider to send query.");
 		QueryMedium request = _serverConnection.ReceiveObject();
 		byte[] query = request.data;
-		
+		printBytes(query);
 		System.out.println("Query received. Fetching attributes.");
 		//Send PIN
 		CommandAPDU command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.VALIDATE_PIN_INS, 0x00, 0x00,new byte[]{0x01,0x02,0x03,0x04});
@@ -41,14 +41,24 @@ public class ReleaseAttributes {
 		if(response.getSW()==SignalCodes.SW_QUERY_RIGHTS_FAILED) throw new Exception("Not the right query rights."); 
 		short resp_len = response.getData()[query.length+5];
 		byte[] e_attributes = new byte[resp_len];
-		for(short i=0; i<response.getData().length; i++)
+		for(short i=0; i<resp_len; i++)
 		{
-			e_attributes[i] = response.getData()[query.length+6+i];
+			e_attributes[i] = (byte)response.getData()[query.length+6+i];
 		}
-		
+		printBytes(response.getData());
+		printBytes(e_attributes);
 		System.out.println("Attributes retrieved from card. Sending them to service provider.");
 		QueryMedium attrResponse = new QueryMedium();
 		attrResponse.data = e_attributes;
 		_serverConnection.Send(attrResponse);
+	}
+	
+	private static void printBytes(byte[] data) {
+		String sb1 = "";
+		for (byte b: data) {
+			sb1 +="(byte)0x" +  String.format("%02x", b) + ", ";
+		}
+		System.out.println(sb1);
+		
 	}
 }

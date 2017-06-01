@@ -24,7 +24,7 @@ public class AuthenticationCard {
 	public void authenticate() throws Exception
 	{
 		System.out.println("Waiting for Service Provider to send challenge.");
-		Array request = _serverConnection.ReceiveObject();
+		CardAuthenticationMedium request = _serverConnection.ReceiveObject();
 		
 		byte[] encrypted_challenge = request.data;
 		CommandAPDU command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_AUTH_CARD, 0x00, 0x00, encrypted_challenge);

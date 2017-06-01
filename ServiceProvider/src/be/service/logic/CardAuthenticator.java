@@ -3,6 +3,7 @@ package be.service.logic;
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
@@ -69,9 +70,13 @@ public class CardAuthenticator {
 		byte[] signature = _getsignatureFromMessageReply(replyMessage);
 		
 		// Verify challenge
-		byte[] hashedChallenge = Hasher.hashBytes(ByteSerializer.EncodeInt(_challenge)); 
-		SignatureVerifier verifier = new SignatureVerifier(pub);
+		byte[] challenge = ByteBuffer.allocate(4 + 4)
+									 .putInt(_challenge)
+								  	 .put("Auth".getBytes())
+								  	 .array();
+		byte[] hashedChallenge = Hasher.hashBytes(challenge);
 		
+		SignatureVerifier verifier = new SignatureVerifier(pub);
 		return verifier.verify(hashedChallenge, signature);
 	}
 

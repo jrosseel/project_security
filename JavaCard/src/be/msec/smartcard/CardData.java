@@ -15,6 +15,7 @@ public final class CardData
 	private byte[] nymDefault2;
 	private byte[] nymHealth1; // our own created domain = healthcare
 	private byte[] nymHealth2;
+	
 	private final byte[] name = new byte[]{(byte)0x46, (byte)0x72, (byte)0x61, (byte)0x6e, (byte)0x6b, (byte)0x69, (byte)0x65, (byte)0x20, (byte)0x4c, (byte)0x6f, (byte)0x6f, (byte)0x73, (byte)0x76, (byte)0x65, (byte)0x6c, (byte)0x64}; // Frankie Loosveld
 	private final byte[] address = new byte[]{(byte)0x45, (byte)0x69, (byte)0x6c, (byte)0x61, (byte)0x6e, (byte)0x64, (byte)0x6c, (byte)0x61, (byte)0x61, (byte)0x6e, (byte)0x20, (byte)0x34, (byte)0x35}; // Eilandlaan 45;
 	private final byte[] country = new byte[]{(byte)0x42, (byte)0x45, (byte)0x4c, (byte)0x47, (byte)0x49, (byte)0x55, (byte)0x4d}; // BELGIUM;

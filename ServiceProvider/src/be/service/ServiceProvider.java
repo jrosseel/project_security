@@ -9,6 +9,7 @@ import java.security.PrivateKey;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -25,7 +26,6 @@ import be.security.shared.data.SignedData;
 import be.security.shared.encryption.ByteSerializer;
 import be.security.shared.encryption.Cryptography;
 import be.security.shared.keystore.KeyReader;
-import be.security.shared.settings.GlobalConsts;
 import be.service.certify.X509CertificateSimplifier;
 import be.service.config.Config;
 import be.service.config.ServerException;
@@ -50,7 +50,7 @@ public class ServiceProvider {
 	}
 
 	public void run()
-					throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException, IOException, ClassNotFoundException, InvalidAlgorithmParameterException 
+					throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException, IOException, ClassNotFoundException, InvalidAlgorithmParameterException, InvalidKeySpecException 
 	{	
 		// First authenticate yourself to the caller
 		SignedData<Certificate> signedCert = _getIdentification();
@@ -73,10 +73,12 @@ public class ServiceProvider {
 			CardAuthenticator authenticator = new CardAuthenticator(_symmetricKey);
 			_connection.Send(authenticator.getAuthenticationRequest());
 			
+			System.out.println("Card authentication request sent. Waiting for response.");
 			CardAuthenticationMedium cardAuthResponse = _connection.ReceiveObject();
 			System.out.println("Received card authentication response.");
 			
-			authenticator.verifyChallenge(cardAuthResponse.data);
+			if(! authenticator.verifyChallenge(cardAuthResponse.data))
+				throw new ServerException("Card authentication failed. Invalid challenge response.");
 		} 
 		catch (ServerException e) 
 		{	

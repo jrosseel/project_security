@@ -1,14 +1,12 @@
 package be.msec.client;
 
-import java.nio.ByteBuffer;
-
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
 import be.msec.client.connection.IConnection;
-import be.security.shared.data.CardAuthenticationMedium;
+import be.security.shared.data.QueryMedium;
 import global.connection.sockets.SocketTransmitter;
 
 public class ReleaseAttributes {
@@ -24,8 +22,10 @@ public class ReleaseAttributes {
 	public void release() throws Exception
 	{
 		System.out.println("Waiting for Service Provider to send query.");
-		//CardAuthenticationMedium request = _serverConnection.ReceiveObject();
+		QueryMedium request = _serverConnection.ReceiveObject();
+		byte[] query = request.data;
 		
+		System.out.println("Query received. Fetching attributes.");
 		//Send PIN
 		CommandAPDU command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.VALIDATE_PIN_INS, 0x00, 0x00,new byte[]{0x01,0x02,0x03,0x04});
 		ResponseAPDU response = _cardConnection.transmit(command);
@@ -34,7 +34,6 @@ public class ReleaseAttributes {
 		else if(response.getSW()!=0x9000) throw new Exception("Exception on the card: " + response.getSW());
 		System.out.println("PIN Verified");		
 		
-		byte[] query = new byte[20];
 		command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_ATTRIBUTE_QUERY, 0x00, 0x00, query);
 		response = _cardConnection.transmit(command);
 
@@ -47,18 +46,9 @@ public class ReleaseAttributes {
 			e_attributes[i] = response.getData()[query.length+6+i];
 		}
 		
-		
-		
+		System.out.println("Attributes retrieved from card. Sending them to service provider.");
+		QueryMedium attrResponse = new QueryMedium();
+		attrResponse.data = e_attributes;
+		_serverConnection.Send(attrResponse);
 	}
-	
-	private static void printBytes(byte[] data) {
-		String sb1 = "";
-		for (byte b: data) {
-			sb1 +="(byte)0x" +  String.format("%02x", b) + ", ";
-		}
-		System.out.println(sb1);
-		
-	}
-	
-
 }

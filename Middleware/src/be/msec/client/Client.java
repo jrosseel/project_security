@@ -55,7 +55,8 @@ public class Client {
 
 			AuthenticationServiceProvider asp = new AuthenticationServiceProvider(c);
 			asp.authenticate();
-						
+			
+			System.out.println("Successfully finished program. Shutting middleware down.");
 		} catch (Exception e) {
 			throw e;
 		}

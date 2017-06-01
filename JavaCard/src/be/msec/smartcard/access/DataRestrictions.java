@@ -5,7 +5,7 @@ import be.msec.cardprimitives.smartcard.QueryCodes;
 
 public class DataRestrictions 
 {
-	private static final byte[] DEFAULT_ALLOWED 	= new byte[] { QueryCodes.NYM, QueryCodes.NAME_REQUEST, QueryCodes.AGE_REQUEST };
+	private static final byte[] DEFAULT_ALLOWED 	= new byte[] { QueryCodes.NYM, QueryCodes.AGE_REQUEST };
 	private static final byte[] GOVERNMENT_ALLOWED 	= new byte[] { QueryCodes.NYM, QueryCodes.NAME_REQUEST, QueryCodes.COUNTRY_REQUEST, QueryCodes.BIRTHDATE_REQUEST, QueryCodes.AGE_REQUEST, QueryCodes.GENDER_REQUEST, QueryCodes.SSN_REQUEST};
 	private static final byte[] SOCNET_ALLOWED 		= new byte[] { QueryCodes.NYM, QueryCodes.NAME_REQUEST, QueryCodes.COUNTRY_REQUEST, QueryCodes.AGE_REQUEST, QueryCodes.GENDER_REQUEST, QueryCodes.PHOTO_REQUEST };
 	private static final byte[] HEALTHCARE_ALLOWED	= new byte[] { QueryCodes.NYM, QueryCodes.NAME_REQUEST, QueryCodes.COUNTRY_REQUEST, QueryCodes.BIRTHDATE_REQUEST, QueryCodes.GENDER_REQUEST, QueryCodes.PHOTO_REQUEST, QueryCodes.SSN_REQUEST };

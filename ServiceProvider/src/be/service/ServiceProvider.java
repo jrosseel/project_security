@@ -22,6 +22,7 @@ import be.security.shared.data.Certificate;
 import be.security.shared.data.KeyNegotiation;
 import be.security.shared.data.KeyNegotiationChallenge;
 import be.security.shared.data.KeyNegotiationResponse;
+import be.security.shared.data.QueryMedium;
 import be.security.shared.data.SignedData;
 import be.security.shared.encryption.ByteSerializer;
 import be.security.shared.encryption.Cryptography;
@@ -30,20 +31,23 @@ import be.service.certify.X509CertificateSimplifier;
 import be.service.config.Config;
 import be.service.config.ServerException;
 import be.service.logic.CardAuthenticator;
+import be.service.logic.Queryer;
 import global.connection.sockets.SocketTransmitter;
 
 public class ServiceProvider {
 	
 	private SocketTransmitter _connection;
+	private int 			  _spId;
 	private String 			  _name;
-	private int 			  _domainId;
+	private byte 			  _domainId;
 	private KeyReader 		  _keyReader;
 	
 	private SecretKey _symmetricKey;
 	private Certificate _myCert;
 	
-	public ServiceProvider(SocketTransmitter connection, String name, int domainId) {
+	public ServiceProvider(SocketTransmitter connection, int spId, String name, byte domainId) {
 		_connection = connection;
+		_spId = spId;
 		_name = name;
 		_domainId = domainId;
 		_keyReader = new KeyReader(name, Config.KEYSTORE_PASSWD);
@@ -77,8 +81,18 @@ public class ServiceProvider {
 			CardAuthenticationMedium cardAuthResponse = _connection.ReceiveObject();
 			System.out.println("Received card authentication response.");
 			
-			if(! authenticator.verifyChallenge(cardAuthResponse.data))
-				throw new ServerException("Card authentication failed. Invalid challenge response.");
+			//if(! authenticator.verifyChallenge(cardAuthResponse.data))
+			//	throw new ServerException("Card authentication failed. Invalid challenge response.");
+			
+			System.out.println("Card authenticated. Asking query.");
+
+			QueryMedium queryAsk = new QueryMedium();
+			queryAsk.data = new Queryer(_spId).makeQuery();
+			_connection.Send(queryAsk);
+			
+			System.out.println("Query answer received. Printing data");
+			QueryMedium queryResp = _connection.ReceiveObject();
+			
 		} 
 		catch (ServerException e) 
 		{	

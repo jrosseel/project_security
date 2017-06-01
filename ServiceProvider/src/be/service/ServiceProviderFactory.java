@@ -11,28 +11,28 @@ public class ServiceProviderFactory {
 		switch(spChoice) 
 		{
 			case ServiceProviders.DefaultIdentity:
-				return new ServiceProvider(connection, "default_identity", Domains.Default);
+				return new ServiceProvider(connection, spChoice, "default_identity", Domains.Default);
 				
 			case ServiceProviders.AnotherDefault:
-				return new ServiceProvider(connection, "another_default", Domains.Default);
+				return new ServiceProvider(connection, spChoice, "another_default", Domains.Default);
 				
 			case ServiceProviders.BelgianFiscalAuthority:
-				return new ServiceProvider(connection, "belgian_fiscal_authority", Domains.Government);
+				return new ServiceProvider(connection, spChoice, "belgian_fiscal_authority", Domains.Government);
 				
 			case ServiceProviders.BelgianGovernmentIdentity:
-				return new ServiceProvider(connection, "belgian_gov_identity", Domains.Government);
+				return new ServiceProvider(connection, spChoice, "belgian_gov_identity", Domains.Government);
 				
 			case ServiceProviders.DoktersUnie:
-				return new ServiceProvider(connection, "dokters_unie", Domains.Healthcare);
+				return new ServiceProvider(connection, spChoice, "dokters_unie", Domains.Healthcare);
 				
 			case ServiceProviders.SociaalVerzekeringsFonds:
-				return new ServiceProvider(connection, "sociaal_verzekeringsfonds", Domains.Healthcare);
+				return new ServiceProvider(connection, spChoice, "sociaal_verzekeringsfonds", Domains.Healthcare);
 			
 			case ServiceProviders.Facebook:
-				return new ServiceProvider(connection, "facebook", Domains.SocialNet);
+				return new ServiceProvider(connection, spChoice, "facebook", Domains.SocialNet);
 				
 			case ServiceProviders.Twitter:
-				return new ServiceProvider(connection, "twitter", Domains.SocialNet);
+				return new ServiceProvider(connection, spChoice, "twitter", Domains.SocialNet);
 
 		}
 		

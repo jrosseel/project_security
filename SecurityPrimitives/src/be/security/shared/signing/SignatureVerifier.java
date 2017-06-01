@@ -26,6 +26,11 @@ public class SignatureVerifier
 		_caPublicKey = _caKeyStore.readPublic(caKey);	
 	}
 	
+	public SignatureVerifier(PublicKey pk) 
+	{
+		_caPublicKey = pk;	
+	}
+	
 	/**
 	 * Verifies if the signed data is valid. 
 	 * @param <T>

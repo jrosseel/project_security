@@ -10,7 +10,16 @@ public class DataRestrictions
 	private static final byte[] SOCNET_ALLOWED 		= new byte[] { QueryCodes.NYM, QueryCodes.NAME_REQUEST, QueryCodes.COUNTRY_REQUEST, QueryCodes.AGE_REQUEST, QueryCodes.GENDER_REQUEST, QueryCodes.PHOTO_REQUEST };
 	private static final byte[] HEALTHCARE_ALLOWED	= new byte[] { QueryCodes.NYM, QueryCodes.NAME_REQUEST, QueryCodes.COUNTRY_REQUEST, QueryCodes.BIRTHDATE_REQUEST, QueryCodes.GENDER_REQUEST, QueryCodes.PHOTO_REQUEST, QueryCodes.SSN_REQUEST };
 	
-	public static boolean IsAllowedAccess(byte requestedAttributeCode, byte domain) 
+	public static boolean IsAllowedAccess(byte[] requestedAttributes, byte domain) {
+		boolean access = true;
+		
+		for(int i = 0; i < requestedAttributes.length; i++)
+			access = access && _requestAllowedAccess(requestedAttributes[i], domain);
+		
+		return access;
+	}
+	
+	public static boolean _requestAllowedAccess(byte requestedAttributeCode, byte domain) 
 	{
 		switch(domain)
 		{

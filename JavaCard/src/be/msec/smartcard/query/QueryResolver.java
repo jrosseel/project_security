@@ -16,15 +16,26 @@ public class QueryResolver
 	public byte[] resolveQuery(byte[] queryRequest)
 			throws Exception 
 	{
-		byte[][] response = new byte[queryRequest.length][];
-		
+		ByteBuffer buffer = ByteBuffer.allocate(2);
+		buffer.putShort((short) queryRequest.length);
+
 		for(int i = 0; i < queryRequest.length; i++)
-			response[i] = _resolveRequest(queryRequest[i]);
+			buffer =_concatBuffers(buffer, _resolveRequest(queryRequest[i]));
 		
-		return _flatmapResponse((short) queryRequest.length, response);
+		ByteBuffer stop = ByteBuffer.allocate(1).put(QueryCodes.STOP);
+		buffer = _concatBuffers(buffer, stop);
+		
+		return buffer.array();
 	}
 
-	private byte[] _resolveRequest(byte request) throws Exception 
+	private static ByteBuffer _concatBuffers(ByteBuffer buffer, ByteBuffer buffer2) 
+	{
+		return ByteBuffer.allocate(buffer.capacity() + buffer2.capacity())
+						 .put(buffer)
+						 .put(buffer2);
+	}
+
+	private ByteBuffer _resolveRequest(byte request) throws Exception 
 	{
 		byte[] requestAnswer = null;
 		switch(request)
@@ -61,8 +72,7 @@ public class QueryResolver
 		return ByteBuffer.allocate(3 + requestAnswer.length)
 						 .put(request)
 						 .putShort((short) requestAnswer.length)
-						 .put(requestAnswer)
-						 .array();
+						 .put(requestAnswer);
 	}
 	
 	private byte[] _flatmapResponse(short reqLength, byte[][] response) 

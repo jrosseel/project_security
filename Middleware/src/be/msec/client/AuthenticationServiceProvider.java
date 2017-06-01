@@ -110,9 +110,14 @@ public class AuthenticationServiceProvider
 			System.out.println("Received challenge response");
 			
 			byte[] key_resp = keyResponse.challengeResponse;
+			printBytes(key_resp);
 			
 			command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_CHECK_SERVER_RESP, 0x00, 0x00, key_resp);
 			response = _cardConnection.transmit(command);
+			if (response.getSW()==SignalCodes.SW_CHALLENGE_FAILED)
+				throw new Exception("Challenge failed.");
+			System.out.println("Service provider authenticated!");
+			
 		}
 	}
 

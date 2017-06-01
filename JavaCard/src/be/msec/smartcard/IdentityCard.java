@@ -43,6 +43,7 @@ public class IdentityCard extends Applet {
     private final byte[] exp_pub_ca = new byte[]{(byte)0x01, (byte)0x00, (byte)0x01};    
     private final byte[] mod_priv_co = new byte[]{(byte)0xbe, (byte)0x6d, (byte)0x72, (byte)0x7f, (byte)0xae, (byte)0xd1, (byte)0x1d, (byte)0x34, (byte)0xe2, (byte)0xaf, (byte)0x74, (byte)0xe2, (byte)0x3e, (byte)0xf5, (byte)0x51, (byte)0x9f, (byte)0xb4, (byte)0xf0, (byte)0x2b, (byte)0xb0, (byte)0xfb, (byte)0xab, (byte)0xbb, (byte)0x61, (byte)0x3f, (byte)0xab, (byte)0xd2, (byte)0x12, (byte)0xdb, (byte)0xa7, (byte)0x95, (byte)0xd8, (byte)0x2b, (byte)0xc9, (byte)0x26, (byte)0x2f, (byte)0x3c, (byte)0xff, (byte)0x99, (byte)0x4a, (byte)0x09, (byte)0x10, (byte)0x64, (byte)0x14, (byte)0x95, (byte)0x3e, (byte)0x03, (byte)0xd5, (byte)0x86, (byte)0xa3, (byte)0x30, (byte)0x39, (byte)0xa8, (byte)0x39, (byte)0xd3, (byte)0xe8, (byte)0xbe, (byte)0xe3, (byte)0x8d, (byte)0x39, (byte)0x11, (byte)0x1e, (byte)0x53, (byte)0x6f};       
     private final byte[] exp_priv_co = new byte[]{(byte)0x12, (byte)0x14, (byte)0x82, (byte)0x2c, (byte)0x20, (byte)0x85, (byte)0x03, (byte)0xdc, (byte)0x16, (byte)0x63, (byte)0x62, (byte)0x4d, (byte)0x9f, (byte)0x49, (byte)0x75, (byte)0x18, (byte)0x1c, (byte)0xc7, (byte)0x6a, (byte)0x78, (byte)0x28, (byte)0x20, (byte)0x37, (byte)0xa2, (byte)0x48, (byte)0xea, (byte)0xec, (byte)0x32, (byte)0x61, (byte)0x5e, (byte)0xff, (byte)0xff, (byte)0xca, (byte)0xb5, (byte)0x72, (byte)0x7d, (byte)0xf3, (byte)0x78, (byte)0x46, (byte)0x53, (byte)0xe4, (byte)0x46, (byte)0x47, (byte)0x5d, (byte)0xd9, (byte)0xe6, (byte)0xda, (byte)0xcf, (byte)0x2a, (byte)0xa2, (byte)0x0b, (byte)0x26, (byte)0x71, (byte)0xba, (byte)0x02, (byte)0xc0, (byte)0x09, (byte)0x3d, (byte)0x3a, (byte)0xeb, (byte)0xe6, (byte)0xed, (byte)0x89, (byte)0x81};
+    private byte[] diff;
     private OwnerPIN pin;
 	private AESKey ks;
 	private byte[] challenge; 
@@ -51,6 +52,7 @@ public class IdentityCard extends Applet {
 	//input above instance variables into info below
 	private byte[] info;
 	private short incomingData;
+	private short auth = 0;
 	//	private short newPin;
 	
 	private IdentityCard() {
@@ -61,7 +63,7 @@ public class IdentityCard extends Applet {
 		pin.update(new byte[]{0x01,0x02,0x03,0x04},(short) 0, InstructionCodes.PIN_SIZE); 
 		
 		sigma = new byte[]{ 0x00, 0x00, 0x00, 0x00, 0x05, 0x26, 0x5C, 0x00 }; // 1 day = 86400000 milliseconds 
-				
+		diff = new byte[]{0x00, 0x00, 0x00, 0x01};		
 		card = new CardData();
 		
 		// public key G
@@ -490,9 +492,10 @@ public class IdentityCard extends Applet {
 	
 	private void _doServAuthEmsg(APDU apdu)
 	{
-		challenge = new byte[4];
-		RandomData rnd = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
-		rnd.generateData(challenge, (short)0, (short)challenge.length);
+		challenge = new byte[]{0x00, 0x00, 0x00, 0x02};
+		//challenge = new byte[4];
+		//RandomData rnd = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
+		//rnd.generateData(challenge, (short)0, (short)challenge.length);
 		
 		// encrypt challenge and subject. Length = 4 (2 shorts defining the length of challenge and subject) + challenge + subject
 		short needed = 0;
@@ -612,10 +615,34 @@ public class IdentityCard extends Applet {
 		if ( ! pin.isValidated()) ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
 		else{
 			byte[] buffer_in = apdu.getBuffer();
-			short offset = (short) (ISO7816.OFFSET_CDATA);
-			byte length_response = (short)(ISO7816.OFFSET_LC);
-
-			byte[] buffer_out = new byte[]{length_response};
+			short offset = 5;
+			byte length_response = (short)16;
+			
+			byte[]response = new byte[length_response];
+			for(short i=0; i<length_response; i++)
+			{
+				response[i] = buffer_in[offset+i];
+			}
+			
+			byte[] decrypted = new byte[16];
+			AESencrypt.init(ks, Cipher.MODE_DECRYPT);
+			AESencrypt.doFinal(response, (short)0, (short)response.length, decrypted, (short)0);
+			
+			byte[] challenge_check = {decrypted[12], decrypted[13], decrypted[14], decrypted[15]};
+			challenge_check[3] = (byte) (challenge_check[3] - diff[3]);
+			byte result = 2;
+			
+			for(short i=0; i<4;i++)
+			{
+				if(challenge[i]!=challenge_check[i])
+				{
+					ISOException.throwIt(SignalCodes.SW_CHALLENGE_FAILED);
+					break;
+				}
+			}
+			auth = 1;
+			
+			byte[] buffer_out = new byte[]{result};
 			
 			apdu.setOutgoing();
 			

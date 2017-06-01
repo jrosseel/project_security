@@ -2,6 +2,8 @@ package be.msec.smartcard.query;
 
 import java.nio.ByteBuffer;
 
+import com.sun.javacard.crypto.r;
+
 import be.msec.cardprimitives.smartcard.QueryCodes;
 import be.msec.smartcard.CardData;
 
@@ -15,24 +17,35 @@ public class QueryResolver
 	
 	public byte[] resolveQuery(byte[] queryRequest)
 			throws Exception 
-	{
-		ByteBuffer buffer = ByteBuffer.allocate(2);
-		buffer.putShort((short) queryRequest.length);
-
+	{		
+		//ByteBuffer current;
+		ByteBuffer temp = ByteBuffer.allocate(0);
+		ByteBuffer result = ByteBuffer.allocate(0); 
+		short len = 0;
+		short len_res = 0;
 		for(int i = 0; i < queryRequest.length; i++)
-			buffer =_concatBuffers(buffer, _resolveRequest(queryRequest[i]));
-		
-		ByteBuffer stop = ByteBuffer.allocate(1).put(QueryCodes.STOP);
-		buffer = _concatBuffers(buffer, stop);
-		
-		return buffer.array();
+		{
+			temp.clear();
+			temp = clone(result);
+			len_res = (short)result.array().length;
+			result.clear();
+			ByteBuffer current = clone(_resolveRequest(queryRequest[i]));
+			len = (short)current.array().length;
+			result = clone(ByteBuffer.allocate((short)(len_res+len)).put(temp).put(current));
+		}
+		temp = clone(result);
+		//result.clear();
+		result = ByteBuffer.allocate(temp.array().length+1).put(temp).put(QueryCodes.STOP);
+		return result.array();
 	}
-
-	private static ByteBuffer _concatBuffers(ByteBuffer buffer, ByteBuffer buffer2) 
-	{
-		return ByteBuffer.allocate(buffer.capacity() + buffer2.capacity())
-						 .put(buffer)
-						 .put(buffer2);
+	
+	public static ByteBuffer clone(ByteBuffer original) {
+	       ByteBuffer clone = ByteBuffer.allocate(original.capacity());
+	       original.rewind();//copy from the beginning
+	       clone.put(original);
+	       original.rewind();
+	       clone.flip();
+	       return clone;
 	}
 
 	private ByteBuffer _resolveRequest(byte request) throws Exception 

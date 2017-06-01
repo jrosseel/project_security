@@ -11,6 +11,8 @@ import java.security.spec.InvalidKeySpecException;
 
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
+import be.msec.smartcard.access.DataRestrictions;
+import be.msec.smartcard.query.QueryResolver;
 import javacard.framework.APDU;
 import javacard.framework.Applet;
 import javacard.framework.ISO7816;
@@ -143,6 +145,7 @@ public class IdentityCard extends Applet {
 		} catch (SignatureException e) {
 		} catch (CryptoException e) {
 		} catch (InvalidKeySpecException e) {
+		} catch (Exception e) {
 		}
 	}
 
@@ -186,16 +189,9 @@ public class IdentityCard extends Applet {
 
 	/**
 	 * Executes the current instruction
-	 * @throws IOException 
-	 * @throws CertificateException 
-	 * @throws NoSuchAlgorithmException 
-	 * @throws KeyStoreException 
-	 * @throws SignatureException 
-	 * @throws InvalidKeyException 
-	 * @throws InvalidKeySpecException 
-	 * @throws CryptoException 
+	 * @throws Exception 
 	 */
-	private void _executeInstruction(APDU apdu, byte[] buffer) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, InvalidKeyException, SignatureException, CryptoException, InvalidKeySpecException 
+	private void _executeInstruction(APDU apdu, byte[] buffer) throws Exception 
 	{
 		//A switch statement is used to select a method depending on the instruction
 		switch(buffer[ISO7816.OFFSET_INS])
@@ -740,14 +736,19 @@ public class IdentityCard extends Applet {
 		}
 	}
 	
-	private void _doAttributeQuery(APDU apdu)
+	private void _doAttributeQuery(APDU apdu) throws Exception
 	{
 		if ( ! pin.isValidated()) ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
 		else{
 			// buffer contains Emsg
 			byte[] buffer_in = apdu.getBuffer();			
-			short offset = 5;
-			byte length_response = (short)16;
+			short offset = (short) (ISO7816.OFFSET_CDATA); 
+			byte[] requested = new byte[buffer_in.length-offset];
+			
+			for(short i=0; i<buffer_in.length-offset; i++)
+			{
+				requested[i] = buffer_in[offset+i];
+			}
 			
 			// First check if authentication = true
 			if(auth!=1)
@@ -756,8 +757,8 @@ public class IdentityCard extends Applet {
 			}
 			
 			short domain_code = ByteBuffer.wrap(new byte[]{authBuffer[0], authBuffer[1]}).getShort();
-			
-			// checken of query € maxRight, anders error
+			if(!DataRestrictions.IsAllowedAccess(requested, (byte)domain_code))
+				ISOException.throwIt(SignalCodes.SW_QUERY_RIGHTS_FAILED);
 			
 			// Construct nym
 			MessageDigest md = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
@@ -768,14 +769,13 @@ public class IdentityCard extends Applet {
 			card.setNym(hash);
 			
 			// query results;
-			byte[] results = new byte[20];			
-			
+			QueryResolver res = new QueryResolver(card);
+			byte[] results = res.resolveQuery(requested);
+					
+					
 			// Final data = nym + results: sym encrypt
-			byte[] final_data = ByteBuffer.allocate(card.getNym().length+results.length).put(card.getNym()).put(results).array();
-			
-			short encrypt_length = (short)(final_data.length); 
-			short needed = 0;
-			
+			short encrypt_length = (short)(results.length+card.getNym().length); 
+			short needed = 0;		
 			byte[]extra = null;
 			if(encrypt_length%16!=0)
 			{
@@ -783,7 +783,8 @@ public class IdentityCard extends Applet {
 				encrypt_length = (short)(encrypt_length+needed);
 				extra = new byte[needed];
 			}
-																						
+			byte[] final_data = ByteBuffer.allocate(card.getNym().length+results.length+needed).put(card.getNym()).put(results).put(extra).array();		
+			
 			byte[] e_attributes = new byte[encrypt_length];
 			// encrypt the bytebuffer above
 			AESencrypt.init(ks, Cipher.MODE_ENCRYPT);

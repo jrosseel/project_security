@@ -38,14 +38,16 @@ public class ReleaseAttributes {
 		command = new CommandAPDU(InstructionCodes.IDENTITY_CARD_CLA, InstructionCodes.DO_ATTRIBUTE_QUERY, 0x00, 0x00, query);
 		response = _cardConnection.transmit(command);
 
-		if(response.getSW()==SignalCodes.SW_AUTHENTICATION_CARD_FAILED) throw new Exception("Authentication failed");
-		 
+		if(response.getSW()==SignalCodes.SW_AUTHENTICATION_CARD_FAILED) throw new Exception("Authentication failed.");
+		if(response.getSW()==SignalCodes.SW_QUERY_RIGHTS_FAILED) throw new Exception("Not the right query rights."); 
 		short resp_len = response.getData()[query.length+5];
 		byte[] e_attributes = new byte[resp_len];
 		for(short i=0; i<response.getData().length; i++)
 		{
 			e_attributes[i] = response.getData()[query.length+6+i];
 		}
+		
+		
 		
 	}
 	

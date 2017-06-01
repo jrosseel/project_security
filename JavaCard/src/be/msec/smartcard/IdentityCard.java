@@ -744,6 +744,8 @@ public class IdentityCard extends Applet {
 			// buffer contains Emsg
 			byte[] buffer_in = apdu.getBuffer();			
 			short offset = (short) 5; 
+			short nr_attributes = buffer_in[4];
+			
 			short length = ByteBuffer.wrap(new byte[]{0x00, buffer_in[4]}).getShort();
 			byte[] requested = new byte[length];
 			byte result = 1;
@@ -775,7 +777,8 @@ public class IdentityCard extends Applet {
 			byte[] results = res.resolveQuery(requested);		
 					
 			// Final data = nym + results: sym encrypt
-			short encrypt_length = (short)(results.length+card.getNym().length+3); 
+			nr_attributes = (short)(nr_attributes+1); 
+			short encrypt_length = (short)(results.length+card.getNym().length+3+1); 
 			short needed = 0;		
 			byte[]extra = null;
 			if(encrypt_length%16!=0)
@@ -787,7 +790,7 @@ public class IdentityCard extends Applet {
 			
 			// Allways return nym + some extra field
 			// One field= [QueryCode, length_datafield, datafield] => QueryCode = 1 byte, length_datafield = 2 bytes (short) => so always need 3 bytes + length of datafield
-			byte[] final_data = ByteBuffer.allocate(card.getNym().length+results.length+3+needed).put((byte)0x00).putShort((short) card.getNym().length).put(card.getNym()).put(results).put(extra).array();		
+			byte[] final_data = ByteBuffer.allocate(card.getNym().length+results.length+3+needed+2).putShort(nr_attributes).put((byte)0x00).putShort((short) card.getNym().length).put(card.getNym()).put(results).put(extra).array();		
 			
 			
 			
@@ -806,7 +809,7 @@ public class IdentityCard extends Applet {
 				current++;
 			}
 			
-			byte[] buffer_out = e_attributes;
+			byte[] buffer_out = final_data;
 			apdu.setOutgoing();
 			apdu.setOutgoingLength((short)buffer_out.length);
 			apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);

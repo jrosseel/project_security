@@ -35,7 +35,7 @@ public class AuthenticationServiceProvider
 	{
 		_serverConnection = _createConnection();
 				
-		_serverConnection.Send(new Integer(ServiceProviders.DefaultIdentity));
+		_serverConnection.Send(new Integer(GlobalConsts.SELECTED_SERVER_PROVIDER));
 		SignedData<Certificate> cert = _serverConnection.ReceiveObject();
 		byte [] signature = cert.signature;
 		printBytes(signature);

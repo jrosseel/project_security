@@ -91,10 +91,12 @@ public class ServiceProvider {
 			queryAsk.data = new Queryer(_spId).makeQuery();
 			_connection.Send(queryAsk);
 			
-			System.out.println("Query answer received. Printing data");
 			QueryMedium queryResp = _connection.ReceiveObject();
+			System.out.println("Query answer received. Unpacking data");
 			
-			QueryResultReader qParser = new QueryResultReader(queryResp.data);
+			byte[] queryRespMessage = Cryptography.decryptSymmetric(queryResp.data, _symmetricKey);
+			
+			QueryResultReader qParser = new QueryResultReader(queryRespMessage);
 			_printAttributeData(qParser.read());
 			
 			System.out.println("Service provider job is done. Waiting for the next request.");

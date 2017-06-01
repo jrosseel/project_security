@@ -1,7 +1,12 @@
 package be.security.shared.settings;
 
+import global.connection.sockets.routing.ServiceProviders;
+
 public class GlobalConsts 
 {
+	// Selection of the selected service provider for testing
+	public static final int SELECTED_SERVER_PROVIDER = ServiceProviders.BelgianFiscalAuthority;
+	
 	public final static String CA_SUBJECT = "CN=Global Masterkey CA,OU=Master Key Holding Vault,O=Master Key Holding Ltd.,L=Luxembourg,ST=Brussels,C=BE,E=contact@jenterosseel.com";
 	
 	public final static String KEY_STORE_TYPE = "JKS";

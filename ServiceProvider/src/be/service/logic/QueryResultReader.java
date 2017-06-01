@@ -1,7 +1,6 @@
 package be.service.logic;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import global.connection.sockets.routing.QueryCodes;
@@ -16,15 +15,15 @@ public class QueryResultReader
 		_result = result;
 	}
 	
-				// 2 bytes					 1 byte		2 bytes		x bytes	 1 byte
-	// Structure: numberofattr - attribute[](attrType - attrLength - attr) - stop
+	// Structure package: nym ++ rest
+				      // 2 bytes					 1 byte		2 bytes		x bytes	 1 byte
+	// Structure rest: numberofattr - attribute[](attrType - attrLength - attr) - stop
 	public String[] read()
 	{
 		short nOfAttributes = _getNumberOfAttributes();
 		
 		String[] attributes = new String[nOfAttributes];
-		// Start from after the nOfAttributes byte
-		_cursor = 2;
+
 		for(int i = 0; i < nOfAttributes; i++) 
 			attributes[i] = _parseAttribute();
 		
@@ -48,13 +47,14 @@ public class QueryResultReader
 
 	private short _getNumberOfAttributes()
 	{
-		return _parseShort(Arrays.copyOfRange(_result, 0, 2));
+		short res = _parseShort(Arrays.copyOfRange(_result, _cursor, _cursor + 2));
+		_cursor += 2;
+		
+		return res;
 	}
-	
 	
 	private static short _parseShort(byte[] aShort) {
 		return ByteBuffer.wrap(aShort)
-				  		 .order(ByteOrder.LITTLE_ENDIAN)
 				  		 .getShort();
 	}
 }

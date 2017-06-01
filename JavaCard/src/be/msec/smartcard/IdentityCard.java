@@ -809,7 +809,7 @@ public class IdentityCard extends Applet {
 				current++;
 			}
 			
-			byte[] buffer_out = final_data;
+			byte[] buffer_out = e_attributes;
 			apdu.setOutgoing();
 			apdu.setOutgoingLength((short)buffer_out.length);
 			apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);

@@ -1,4 +1,4 @@
-package be.msec.smartcard;
+package be.msec.smartcard.access;
 
 import be.msec.cardprimitives.smartcard.Domains;
 import be.msec.cardprimitives.smartcard.QueryCodes;

@@ -15,4 +15,6 @@ public class QueryCodes
 	public static final byte GENDER_REQUEST 	= (byte) 0x06;
 	public static final byte PHOTO_REQUEST 		= (byte) 0x07;
 	public static final byte SSN_REQUEST 		= (byte) 0x08;
+	
+	public static final byte STOP 				= (byte) 0x11;
 }

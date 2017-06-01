@@ -16,7 +16,7 @@ import java.security.spec.InvalidKeySpecException;
 
 import be.msec.cardprimitives.smartcard.InstructionCodes;
 import be.msec.cardprimitives.smartcard.SignalCodes;
-//import be.security.shared.data.Certificate;
+import be.security.shared.data.Certificate;
 import javacard.framework.APDU;
 import javacard.framework.Applet;
 import javacard.framework.ISO7816;
@@ -474,7 +474,7 @@ public class IdentityCard extends Applet {
 		// symmetric key
 		ks = (AESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_128, false);
 		ks.setKey(secure_rand, (short)0);
-		ks.
+		
 		// asymmetric encryption of key
 		RSAencrypt.init(pub_sp, Cipher.MODE_ENCRYPT);
 		e_key = new byte[64]; 
@@ -498,15 +498,18 @@ public class IdentityCard extends Applet {
 		short needed = 0;
 		short encrypt_length = (short)(4+challenge.length+subject.length);
 		// array has to be a multiple of 16
+		byte[]extra = null;
 		if(encrypt_length%16!=0)
 		{
 			needed = (short)(16-(encrypt_length%16));
 			encrypt_length = (short)(encrypt_length+needed);
+			extra = new byte[needed];
 		}
 		byte[] to_encrypt =  ByteBuffer.allocate(encrypt_length).putShort((short) challenge.length)
 																					.putShort((short) subject.length)
 																					.put(challenge)
-																					.put(subject).array();
+																					.put(subject)
+																					.put(extra).array();
 		e_msg = new byte[encrypt_length];
 		// encrypt the bytebuffer above
 		AESencrypt.init(ks, Cipher.MODE_ENCRYPT);

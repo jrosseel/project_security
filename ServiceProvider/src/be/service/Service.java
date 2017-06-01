@@ -3,6 +3,7 @@ package be.service;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -21,7 +22,7 @@ import global.connection.sockets.SocketTransmitter;
 public class Service {
 	
 	public static void main(String[] args) 
-			throws IOException, ClassNotFoundException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException
+			throws IOException, ClassNotFoundException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException, InvalidAlgorithmParameterException
 	{
 		// For sake of simplification, we have one server with multiple SPs.
 		//	In real life scenario, every SP would have its own server

@@ -11,12 +11,11 @@ public class GlobalConsts
 	public final static String KEY_STORE_FOLDER = _LOCAL_FOLDER + "\\workspace\\KeysAndCertificates\\";
 	
 	public final static String ASYMM_CRYPTO_ALGORITHM = "RSA"; 
-	public final static String SYMM_CRYPTO_ALGORITHM  = "AES/CBC/PKCS5PADDING"; 
+	public final static String SYMM_CRYPTO_ALGORITHM  = "AES/ECB/NoPadding"; 
 	
 	public static final String HASH_ALGORITHM = "SHA-1";
 
 	public static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
-	
 	
 	// Simplification, should be a URI in a real-life case
 	public final static String GOVERNMENT_SERVER_ADDRESS = "127.0.0.1";

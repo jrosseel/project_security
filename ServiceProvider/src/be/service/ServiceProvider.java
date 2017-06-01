@@ -1,6 +1,7 @@
 package be.service;
 
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -49,7 +50,7 @@ public class ServiceProvider {
 	}
 
 	public void run()
-					throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException, IOException, ClassNotFoundException 
+					throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException, IOException, ClassNotFoundException, InvalidAlgorithmParameterException 
 	{	
 		// First authenticate yourself to the caller
 		SignedData<Certificate> signedCert = _getIdentification();
@@ -89,21 +90,21 @@ public class ServiceProvider {
 	}
 	
 	private KeyNegotiationResponse _handleKeynegotiation(KeyNegotiation keyNeg) 
-					throws ServerException, InvalidKeyException, UnrecoverableKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, KeyStoreException, CertificateException, IOException 
+					throws ServerException, InvalidKeyException, UnrecoverableKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, KeyStoreException, CertificateException, IOException, InvalidAlgorithmParameterException 
 	{
 		System.out.println("Handling key negotiation. Decrypting symmetric key");
 		PrivateKey key = _keyReader.readPrivate(Config.SP_KEY_NAME,
     											Config.SP_KEY_PASSWD);
 		byte[] encodedSymmetricKey 
-					= Cryptography.decryptAsymmetric(keyNeg.encryptedSymmetricKey, 
-													 key);
+					= Cryptography.decryptAsymmetric(keyNeg.encryptedSymmetricKey, key);
 						// Symm key stored as getEncoded
-		_symmetricKey = new SecretKeySpec(encodedSymmetricKey, GlobalConsts.SYMM_CRYPTO_ALGORITHM);
-
+		_symmetricKey = new SecretKeySpec(encodedSymmetricKey, "AES");
+		
 		System.out.println("Decrypting challenge.");
 		byte[] encodedChallenge = Cryptography.decryptSymmetric(keyNeg.encryptedKeyNegotiationChallenge, _symmetricKey);
 		KeyNegotiationChallenge neg = KeyNegotiationChallenge.decode(encodedChallenge);
-		
+
+		System.out.println("Checking subject.");
 		if(!neg.subject.equals(_myCert.subject))
 			throw new ServerException("Invalid subject. Aborting connection.");
 		

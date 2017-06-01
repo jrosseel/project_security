@@ -1,6 +1,7 @@
 package be.service.logic;
 
 import java.io.Serializable;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -41,7 +42,7 @@ public class CardAuthenticator {
 	}
 	
 	public void verifyChallenge(byte[] reply)
-			throws ServerException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException
+			throws ServerException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException
 	{
 		byte[] replyMessage = Cryptography.decryptSymmetric(reply, _symmetricKey);
 		// TODO. properly decode

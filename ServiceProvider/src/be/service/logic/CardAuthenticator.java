@@ -95,6 +95,6 @@ public class CardAuthenticator {
 	 */
 	private byte[] _getsignatureFromMessageReply(byte[] msg)
 	{
-		return Arrays.copyOfRange(msg, 67, msg.length);
+		return Arrays.copyOfRange(msg, 67, 67 + 64);
 	}
 }

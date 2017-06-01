@@ -10,6 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -22,7 +23,7 @@ import global.connection.sockets.SocketTransmitter;
 public class Service {
 	
 	public static void main(String[] args) 
-			throws IOException, ClassNotFoundException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException, InvalidAlgorithmParameterException
+			throws IOException, ClassNotFoundException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException, InvalidAlgorithmParameterException, InvalidKeySpecException
 	{
 		// For sake of simplification, we have one server with multiple SPs.
 		//	In real life scenario, every SP would have its own server

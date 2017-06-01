@@ -280,8 +280,7 @@ public class IdentityCard extends Applet {
 			 *  => OFFSET_DATA = CLA + INS + P1 + P2 + LC
 			 */
 			
-			short length_hello = 5;
-			short offset = (short) (ISO7816.OFFSET_CDATA+length_hello); 
+			short offset = (short) (ISO7816.OFFSET_CDATA); 
 			
 			byte result=0;
 			
@@ -629,7 +628,7 @@ public class IdentityCard extends Applet {
 			AESencrypt.doFinal(response, (short)0, (short)response.length, decrypted, (short)0);
 			
 			byte[] challenge_check = {decrypted[12], decrypted[13], decrypted[14], decrypted[15]};
-			challenge_check[3] = (byte) (challenge_check[3] - diff[3]);
+			challenge[3] = (byte) (challenge[3] + diff[3]);
 			byte result = 2;
 			
 			for(short i=0; i<4;i++)
@@ -656,22 +655,52 @@ public class IdentityCard extends Applet {
 	{
 		if ( ! pin.isValidated()) ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
 		else{
-			byte[] buffer_in = apdu.getBuffer();			
-			
 			// buffer contains Emsg
-			// Decrypt Emsg met Ks
+			byte[] buffer_in = apdu.getBuffer();			
+			short offset = 5;
+			byte length_response = (short)16;
+			
+			// First check if authentication = true
+			if(auth!=1)
+			{
+				ISOException.throwIt(SignalCodes.SW_AUTHENTICATION_CARD_FAILED);
+			}
+			
+			byte[]response = new byte[length_response];
+			for(short i=0; i<length_response; i++)
+			{
+				response[i] = buffer_in[offset+i];
+			}
+			
+			byte[] decrypted = new byte[16];
+			AESencrypt.init(ks, Cipher.MODE_DECRYPT);
+			AESencrypt.doFinal(response, (short)0, (short)response.length, decrypted, (short)0);
+			
+			byte[] to_hash = new byte[20]; // 20 = length decrypted + Auth.length
+			
+			for(short i=0; i<16; i++)
+			{
+				to_hash[i] = decrypted[i];
+			}
+			to_hash[16] = (byte)'A';
+			to_hash[17] = (byte)'u';
+			to_hash[18] = (byte)'t';
+			to_hash[19] = (byte)'h';
+			
 			
 			// Sign decrypted met private key Common
-			// => First hash decrypt
-			
-			// New encrypt: Emsg = Symmetric encryption (CertCO, signature) met Ks
-						
+			// => First hash decrypt	
 			MessageDigest md = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
 			md.reset();
 			byte[] hash = new byte[20];
-			//md.doFinal(time, (short) 0, (short) time.length, hash, (short) 0);
+			md.doFinal(to_hash, (short) 0, (short) to_hash.length, hash, (short) 0);
 						
-			byte[] buffer_out = new byte[]{};
+			Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
+			sig.init(card.getPrivateKeyCommon(), Signature.MODE_SIGN);
+		
+			
+			
+			byte[] buffer_out = new byte[]{(byte)'A'};
 			
 			apdu.setOutgoing();
 			apdu.setOutgoingLength((short)buffer_out.length);

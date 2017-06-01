@@ -118,6 +118,10 @@ public class AuthenticationServiceProvider
 				throw new Exception("Challenge failed.");
 			System.out.println("Service provider authenticated!");
 			
+			AuthenticationCard ac = new AuthenticationCard(_cardConnection, _serverConnection);
+			ac.authenticate();
+			
+			
 		}
 	}
 

@@ -28,6 +28,12 @@ public final class CardData
     private RSAPublicKey publicKeyCA;
     private RSAPrivateKey privateKeyCommon;
     /**
+	 * @return the privateKeyCommon
+	 */
+	public RSAPrivateKey getPrivateKeyCommon() {
+		return privateKeyCommon;
+	}
+	/**
 	 * @return the k_u
 	 */
 	public byte[] getK_u() {

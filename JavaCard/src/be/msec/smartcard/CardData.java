@@ -7,14 +7,7 @@ import javacard.security.RSAPublicKey;
 public final class CardData 
 {
 	private byte[] lastValidationTime  = {0x00, 0x00, 0x01, 0x5c, 0x45, (byte) 0x86, 0x3f, (byte) 0x88}; // 26/05/2017 18:10:45
-	private byte[] nymEgov1; // unique identifier user by first service provider eGov
-	private byte[] nymEgov2;
-	private byte[] nymSocnet1;
-	private byte[] nymSocnet2;
-	private byte[] nymDefault1;
-	private byte[] nymDefault2;
-	private byte[] nymHealth1; // our own created domain = healthcare
-	private byte[] nymHealth2;
+	private byte[] nym;
 	
 	private final byte[] name = new byte[]{(byte)0x46, (byte)0x72, (byte)0x61, (byte)0x6e, (byte)0x6b, (byte)0x69, (byte)0x65, (byte)0x20, (byte)0x4c, (byte)0x6f, (byte)0x6f, (byte)0x73, (byte)0x76, (byte)0x65, (byte)0x6c, (byte)0x64}; // Frankie Loosveld
 	private final byte[] address = new byte[]{(byte)0x45, (byte)0x69, (byte)0x6c, (byte)0x61, (byte)0x6e, (byte)0x64, (byte)0x6c, (byte)0x61, (byte)0x61, (byte)0x6e, (byte)0x20, (byte)0x34, (byte)0x35}; // Eilandlaan 45;
@@ -28,6 +21,7 @@ public final class CardData
     private RSAPublicKey publicKeyGovernment;
     private RSAPublicKey publicKeyCA;
     private RSAPrivateKey privateKeyCommon;
+    private AESKey ku;
     /**
 	 * @return the privateKeyCommon
 	 */
@@ -37,17 +31,13 @@ public final class CardData
 	/**
 	 * @return the k_u
 	 */
-	public byte[] getK_u() {
-		return k_u;
-	}
 	/**
 	 * @param privateKeyCommon the privateKeyCommon to set
 	 */
 	public void setPrivateKeyCommon(RSAPrivateKey privateKeyCommon) {
 		this.privateKeyCommon = privateKeyCommon;
 	}
-	private AESKey ku;
-    private final byte[] k_u = new byte[]{};
+	
 	
 	public CardData(){
 	}
@@ -63,107 +53,9 @@ public final class CardData
 	public void setLastValidationTime(byte[] lastValidationTime) {
 		this.lastValidationTime = lastValidationTime;
 	}
-	/**
-	 * @return the nymEgov1
-	 */
-	public byte[] getNymEgov1() {
-		return nymEgov1;
-	}
-	/**
-	 * @param nymEgov1 the nymEgov1 to set
-	 */
-	public void setNymEgov1(byte[] nymEgov1) {
-		this.nymEgov1 = nymEgov1;
-	}
-	/**
-	 * @return the nymEgov2
-	 */
-	public byte[] getNymEgov2() {
-		return nymEgov2;
-	}
-	/**
-	 * @param nymEgov2 the nymEgov2 to set
-	 */
-	public void setNymEgov2(byte[] nymEgov2) {
-		this.nymEgov2 = nymEgov2;
-	}
-	/**
-	 * @return the nymSocnet1
-	 */
-	public byte[] getNymSocnet1() {
-		return nymSocnet1;
-	}
-	/**
-	 * @param nymSocnet1 the nymSocnet1 to set
-	 */
-	public void setNymSocnet1(byte[] nymSocnet1) {
-		this.nymSocnet1 = nymSocnet1;
-	}
-	/**
-	 * @return the nymSocnet2
-	 */
-	public byte[] getNymSocnet2() {
-		return nymSocnet2;
-	}
-	/**
-	 * @param nymSocnet2 the nymSocnet2 to set
-	 */
-	public void setNymSocnet2(byte[] nymSocnet2) {
-		this.nymSocnet2 = nymSocnet2;
-	}
-	/**
-	 * @return the nymDefault1
-	 */
-	public byte[] getNymDefault1() {
-		return nymDefault1;
-	}
-	/**
-	 * @param nymDefault1 the nymDefault1 to set
-	 */
-	public void setNymDefault1(byte[] nymDefault1) {
-		this.nymDefault1 = nymDefault1;
-	}
-	/**
-	 * @param ku the ku to set
-	 */
+	
 	public void setKu(AESKey ku) {
 		this.ku = ku;
-	}
-	/**
-	 * @return the nymDefault2
-	 */
-	public byte[] getNymDefault2() {
-		return nymDefault2;
-	}
-	/**
-	 * @param nymDefault2 the nymDefault2 to set
-	 */
-	public void setNymDefault2(byte[] nymDefault2) {
-		this.nymDefault2 = nymDefault2;
-	}
-	/**
-	 * @return the nymHealth1
-	 */
-	public byte[] getNymHealth1() {
-		return nymHealth1;
-	}
-	/**
-	 * @param nymHealth1 the nymHealth1 to set
-	 */
-	public void setNymHealth1(byte[] nymHealth1) {
-		this.nymHealth1 = nymHealth1;
-	}
-	/**
-	 * @return the nymHealth2
-	 */
-	public byte[] getNymHealth2() {
-		return nymHealth2;
-	}
-	/**
-	 * @param nymHealth2 the nymHealth2 to set
-	 */
-	public void setNymHealth2(byte[] nymHealth2) {
-		this.nymHealth2 = nymHealth2;
 	}
 	/**
 	 * @param publicKeyGovernment the publicKeyGovernment to set
@@ -171,6 +63,18 @@ public final class CardData
 	public void setPublicKeyGovernment(RSAPublicKey publicKeyGovernment)
 	{
 		this.publicKeyGovernment = publicKeyGovernment;
+	}
+	/**
+	 * @return the nym
+	 */
+	public byte[] getNym() {
+		return nym;
+	}
+	/**
+	 * @param nym the nym to set
+	 */
+	public void setNym(byte[] nym) {
+		this.nym = nym;
 	}
 	/**
 	 * @param publicKeyCA the publicKeyGovernment to set

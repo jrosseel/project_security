@@ -49,7 +49,8 @@ public class AuthenticationCard {
 		_serverConnection.Send(m);
 		
 		System.out.println("Encrypted array sent to server");
-		
+		ReleaseAttributes ra = new ReleaseAttributes(_cardConnection, _serverConnection);
+		ra.release();
 	}
 	
 	private static void printBytes(byte[] data) {

@@ -44,7 +44,6 @@ public class Client {
 			System.out.println(r);
 			if (r.getSW()==SignalCodes.SW_VERIFICATION_FAILED) throw new Exception("PIN INVALID");
 			else if(r.getSW()!=0x9000) throw new Exception("Exception on the card: " + r.getSW());
-			System.out.println("PIN Verified");		
 		
 			TimestampVerifier verifier = new TimestampVerifier(c);
 							

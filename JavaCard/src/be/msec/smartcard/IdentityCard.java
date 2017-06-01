@@ -41,6 +41,7 @@ public class IdentityCard extends Applet {
     private byte[] diff;
     private OwnerPIN pin;
 	private AESKey ks;
+	private byte[] rand_ks;
 	private byte[] challenge; 
 	private Cipher RSAencrypt = Cipher.getInstance(Cipher.ALG_RSA_PKCS1 , false);
 	private Cipher AESencrypt = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
@@ -82,8 +83,11 @@ public class IdentityCard extends Applet {
 		// AES key user
 		AESKey ku;
 		ku = (AESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_128, false);
-		// key = nLkAZn239Fja230P
-		ku.setKey(new byte[]{(byte)0x6e, (byte)0x4c, (byte)0x6b, (byte)0x41, (byte)0x5a, (byte)0x6e, (byte)0x32, (byte)0x33, (byte)0x39, (byte)0x46, (byte)0x6a, (byte)0x61, (byte)0x32, (byte)0x33, (byte)0x30, (byte)0x50}, (short)0);
+		rand_ks = new byte[16];
+		RandomData rnd = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
+        rnd.generateData(rand_ks, (short)0, (short)rand_ks.length);
+		
+		ku.setKey(rand_ks, (short)0);
 		card.setKu(ku);
 				
 		/*
@@ -246,6 +250,9 @@ public class IdentityCard extends Applet {
 				break;
 			case InstructionCodes.DO_CHECK_SERVER_RESP:
 				_doCheckServerResp(apdu);
+				break;
+			case InstructionCodes.DO_ATTRIBUTE_QUERY:
+				_doAttributeQuery(apdu);
 				break;
 				
 			//If no matching instructions are found it is indicated in the status word of the response.
@@ -733,6 +740,71 @@ public class IdentityCard extends Applet {
 		}
 	}
 	
+	private void _doAttributeQuery(APDU apdu)
+	{
+		if ( ! pin.isValidated()) ISOException.throwIt(SignalCodes.SW_PIN_VERIFICATION_REQUIRED);
+		else{
+			// buffer contains Emsg
+			byte[] buffer_in = apdu.getBuffer();			
+			short offset = 5;
+			byte length_response = (short)16;
+			
+			// First check if authentication = true
+			if(auth!=1)
+			{
+				ISOException.throwIt(SignalCodes.SW_AUTHENTICATION_CARD_FAILED);
+			}
+			
+			short domain_code = ByteBuffer.wrap(new byte[]{authBuffer[0], authBuffer[1]}).getShort();
+			
+			// checken of query € maxRight, anders error
+			
+			// Construct nym
+			MessageDigest md = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
+			md.reset();
+			byte[] hash = new byte[20];
+			byte[] to_hash = ByteBuffer.allocate(rand_ks.length+card.getCertificateCommon().length).put(rand_ks).put(card.getCertificateCommon()).array();
+			md.doFinal(to_hash, (short)0, (short) to_hash.length, hash, (short) 0);
+			card.setNym(hash);
+			
+			// query results;
+			byte[] results = new byte[20];			
+			
+			// Final data = nym + results: sym encrypt
+			byte[] final_data = ByteBuffer.allocate(card.getNym().length+results.length).put(card.getNym()).put(results).array();
+			
+			short encrypt_length = (short)(final_data.length); 
+			short needed = 0;
+			
+			byte[]extra = null;
+			if(encrypt_length%16!=0)
+			{
+				needed = (short)(16-(encrypt_length%16));
+				encrypt_length = (short)(encrypt_length+needed);
+				extra = new byte[needed];
+			}
+																						
+			byte[] e_attributes = new byte[encrypt_length];
+			// encrypt the bytebuffer above
+			AESencrypt.init(ks, Cipher.MODE_ENCRYPT);
+			byte[] temp = new byte[16];
+			
+			short max = (short)(encrypt_length/16); 
+			short current = 0;
+			for(short i=0; i<max; i++)
+			{
+				// encrypt block per block
+				AESencrypt.doFinal(final_data, (short)(0+(current*16)), (short)16, temp, (short)0);
+				Util.arrayCopy(temp, (short) 0, e_attributes, (short)(0+(current*16)), (short) 16);
+				current++;
+			}
+			
+			byte[] buffer_out = e_attributes;
+			apdu.setOutgoing();
+			apdu.setOutgoingLength((short)buffer_out.length);
+			apdu.sendBytesLong(buffer_out,(short)0,(short)buffer_out.length);
+		}
+	}
 
 	private void _getCardData(APDU apdu, byte[] item)
 	{
